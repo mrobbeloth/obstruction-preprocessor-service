@@ -1,0 +1,16 @@
+/' To build: java -jar plantuml-1.2023.8.jar services-deployment.input '/
+@startuml
+node preprocessor
+node matching
+node exemplar
+node datastore
+node client
+cloud network
+client--network
+network--matching
+network--exemplar
+matching--preprocessor
+matching--datastore
+exemplar--preprocessor
+exemplar--datastore
+@enduml
