@@ -1,0 +1,34 @@
+/' To build: java -jar plantuml-1.2023.8.jar preprocessing_activity_flow.input '/
+@startuml
+start
+:Load Image as Grayscale;
+if (image is not in eight-bit unsigned?) then (yes)
+    :Convert to eight-bit unsigned (8U);
+endif
+if (debug flag is set?) then (yes)
+    :Save copy of image;
+else (no)
+endif
+:Gaussian Blur image;
+if (debug flag is set?) then (yes)
+    :Save copy of image;
+else (no)
+endif
+:Denoise image (fastNl);
+if (debug flag is set?) then (yes)
+    :Save copy of image;
+else (no)
+endif
+:Sharpen Image;
+if (debug flag is set?) then (yes)
+    :Save copy of image;
+else (no)
+endif
+:Denoise image;
+if (debug flag is set?) then (yes)
+    :Save copy of image;
+else (no)
+endif
+:Partition Image (OpenCV kMeans);
+stop
+@enduml
