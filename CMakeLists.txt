@@ -7,7 +7,7 @@ find_package(OpenCV REQUIRED)
 
 include_directories(AFTER /usr/local/include/opencv2/)
 
-add_executable(preprocessor src/preprocessor.cpp)
+add_executable(preprocessor src/preprocessor.cpp src/utility.cpp)
 
 target_link_libraries(preprocessor opencv_core opencv_imgcodecs opencv_imgproc)
 
