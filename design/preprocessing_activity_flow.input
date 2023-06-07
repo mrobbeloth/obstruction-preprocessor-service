@@ -34,7 +34,7 @@ endif
 :Binary Image Segmentation (ScanSegments);
 :Get List of Matrices from ScanSegments;
 if (debug flag is set?) then (yes)
-    while (segments to process?) then (yes)
+    while (segments to process)
         :Save copy of each segment;
     endwhile
 else (no)
