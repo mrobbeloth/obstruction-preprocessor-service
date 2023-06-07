@@ -1,6 +1,7 @@
 /' To build: java -jar plantuml-1.2023.8.jar preprocessing_activity_flow.input '/
 @startuml
 start
+fork
 :Load Image as Grayscale;
 if (image is not in eight-bit unsigned?) then (yes)
     :Convert to eight-bit unsigned (8U);
@@ -30,5 +31,14 @@ if (debug flag is set?) then (yes)
 else (no)
 endif
 :Partition Image (OpenCV kMeans);
+:Binary Image Segmentation (ScanSegments);
+:Get List of Matrices from ScanSegments;
+if (debug flag is set?) then (yes)
+    while (segments to process?) then (yes)
+        :Save copy of each segment;
+    endwhile
+else (no)
+endif
+end fork
 stop
 @enduml
