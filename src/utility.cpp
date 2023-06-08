@@ -45,10 +45,8 @@ Mat sharpen(Mat input) {
     float kernel[9] = {0,-1,0,-1,5,-1,0,-1,0};
     Mat kernelArray = Mat(3,3,CV_32F,kernel);
     Point anchor(-1,-1);
-    cout << "Got here in sharpen" << endl;
     Mat output(input.rows, input.cols, input.type());
     filter2D(input, output, CV_8U, kernelArray, anchor);
-    cout << "Got here in sharpen 2" << endl;
     return output;
 }
 

@@ -52,8 +52,8 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        /* create a state of the image before preprocessing is done to compare to 
-           later--do we acutally do this in the original java code? */
+        /* create a state of the image before preprocessing is done to use later in 
+           following sharpen operation */
         Mat img_duplicate = img_grayscale.clone();
 
         /* Gaussian Blur image to reduce noise from original image. Will need
@@ -88,7 +88,18 @@ int main(int argc, char* argv[]) {
                 cout << "Failed to write " << outputFileName << endl;
             }
         }
+
+        // Merge original image with preprocessed image for clearest shape
+        Mat mergedMat(img_grayscale.rows, img_grayscale.cols, 
+                            img_grayscale.type());
+        addWeighted(img_duplicate, 1.5, sharpenApplied,-0.5, 0, mergedMat);
+        if (debugFlag) {
+            string outputFileName = "../output/Merged_"+entry;
+            result = imwrite(outputFileName, gaussianApplied);
+            if (!result) {
+                cout << "Failed to write " << outputFileName << endl;
+            }
+        }
     }
-   
     return 0;
 }
