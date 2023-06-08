@@ -62,7 +62,10 @@ int main(int argc, char* argv[]) {
            In the Java Code, I had also applied a non-local means denoising, 
            but believe that may have been overly aggressive, let's keep this 
            simple until we learn more, fastNlMeansDenoising could be used
-           instead of this at some point in the future. */
+           instead of this at some point in the future. 
+           
+           Alternatively we could use median blur or bilateral filter to
+           try to reduce noise while keeping line edges */
         Mat gaussianApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
         GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
