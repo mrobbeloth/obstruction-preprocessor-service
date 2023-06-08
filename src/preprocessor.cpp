@@ -57,12 +57,29 @@ int main(int argc, char* argv[]) {
         Mat img_duplicate = img_grayscale.clone();
 
         /* Gaussian Blur image to reduce noise from original image. Will need
-           to follow-up with edge detection */
+           to follow-up with edge detection 
+           
+           In the Java Code, I had also applied a non-local means denoising, 
+           but believe that may have been overly aggressive, let's keep this 
+           simple until we learn more, fastNlMeansDenoising could be used
+           instead of this at some point in the future. */
         Mat gaussianApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
         GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
         if (debugFlag) {
             string outputFileName = "../output/Gaussian_"+entry;
+            result = imwrite(outputFileName, gaussianApplied);
+            if (!result) {
+                cout << "Failed to write " << outputFileName << endl;
+            }
+        }
+
+        /* follow up with sharpening */
+        Mat sharpenApplied(img_grayscale.rows, img_grayscale.cols, 
+                            img_grayscale.type());
+        sharpenApplied = sharpen(gaussianApplied);
+        if (debugFlag) {
+            string outputFileName = "../output/Sharpen_"+entry;
             result = imwrite(outputFileName, gaussianApplied);
             if (!result) {
                 cout << "Failed to write " << outputFileName << endl;
