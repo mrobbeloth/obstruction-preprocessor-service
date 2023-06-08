@@ -52,6 +52,22 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        /* create a state of the image before preprocessing is done to compare to 
+           later--do we acutally do this in the original java code? */
+        Mat img_duplicate = img_grayscale.clone();
+
+        /* Gaussian Blur image to reduce noise from original image. Will need
+           to follow-up with edge detection */
+        Mat gaussianApplied(img_grayscale.rows, img_grayscale.cols, 
+                            img_grayscale.type());
+        GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
+        if (debugFlag) {
+            string outputFileName = "../output/Gaussian_"+entry;
+            result = imwrite(outputFileName, gaussianApplied);
+            if (!result) {
+                cout << "Failed to write " << outputFileName << endl;
+            }
+        }
     }
    
     return 0;
