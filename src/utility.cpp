@@ -72,3 +72,30 @@ Mat unsharp_masking(Mat input) {
     filter2D(input, output, CV_8U, kernelArray, anchor);
     return output;
 }
+
+//!
+ /*! This method creates an evenly distributed set of initial center points
+to use with the OpenCV partitioning algorithm -- needed to ensure that partitioning
+between candidate and model images are similar -- e.g., the use of a fixed set of
+centroid locations will lower confidence matches to unacceptable levels.
+
+kmeans will squish 2d image into vector of values
+ * \param
+ * \return less blurry image than original
+*/
+Mat setInitialLabelsGrayscale(int width, int height, int k) {
+    int totalCells = width * height;
+    int index = 0;
+    int count = 0;
+    int jump = totalCells / k;
+
+    Mat labels(k, 1, CV_32S);
+
+    while(count < k) {
+        index += jump;
+        labels.at<Vec2i>(Point(count,0)) = index-1; 
+        count++;
+    }
+
+    return labels;
+}

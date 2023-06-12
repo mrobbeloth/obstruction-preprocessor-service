@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
 #include <filesystem>
 #include <string>
 #include "utility.h"
@@ -10,16 +11,30 @@ using namespace filesystem;
 
 int main(int argc, char* argv[]) {
     bool debugFlag = false;
+    int k = 4;
+    int kMeansIterations = 16;
+    int flags = KMEANS_PP_CENTERS; // 0x2
+
     cout << "Starting PreProcessor Service" << endl;
     // check if debug mode is turned on or not
     cout << "argc: " << argc << endl;
     if (argc > 1) {     
-       string param1 = string(argv[1]);
-       cout << param1 << endl;
-       if (param1 == "--debug") {
+        if (argc > 2) {
+            if (argc > 3) {
+                string param3 = string(argv[3]);
+                cout << "Max kMeans Iterations = " << param3 << endl;
+                kMeansIterations = stoi(param3);
+            }
+            string param2 = string(argv[2]);
+            cout << "K=" << param2 << endl;
+            k = stoi(param2);
+        }
+        string param1 = string(argv[1]);
+        cout << param1 << endl;
+        if (param1 == "--debug") {
             cout << "Debug flag set" << endl;
             debugFlag = true;
-       }
+        }
     }
     int fileRemoved = remove_all("../output");
     string path = "../data/coil-100/";
@@ -100,6 +115,42 @@ int main(int argc, char* argv[]) {
                 cout << "Failed to write " << outputFileName << endl;
             }
         }
+
+        // Need to convert data to 32F for kmeans partitioning
+        Mat matForKMeans(mergedMat.rows, mergedMat.cols, CV_32F);
+        mergedMat.convertTo(matForKMeans, CV_32F);
+
+        // Flatten image data for kmeans
+        Mat colVec = mergedMat.reshape(1, mergedMat.rows*mergedMat.cols);
+        Mat colVecFloat;
+        colVec.convertTo(colVecFloat, CV_32F);
+
+        Mat labels = setInitialLabelsGrayscale(matForKMeans.rows, matForKMeans.cols, 
+                                                k);
+        TermCriteria criteria(TermCriteria::Type::EPS+TermCriteria::Type::MAX_ITER,
+                              kMeansIterations, 1.0);
+        
+        /*criteria is no more than x change in pixel centers or y iterations
+          attempts is number of times to use algorithm using different init labeling
+          
+          will return labels with best compactness measure
+
+            labels -- i/o integer array that store the cplsuter indices for every 
+                        sample
+
+            centers -- output matrix of the cluster centers, one row per each cluster
+                        center
+
+        Note: this does not change the image data sent to the array, the clustering
+              of image data iteself has to be done in a post-processing array
+              or what was called opencv_kmeans_PostProcess in original Java code
+        */
+        vector<Point2f> centers;
+        cout << "Before kmeans" << endl;
+        double compactness =
+            kmeans(colVecFloat,k,labels, criteria, criteria.maxCount, flags, centers);
+        cout << "After kmeans" << endl;
+        cout << "Compactness=" << compactness << endl;
     }
     return 0;
 }
