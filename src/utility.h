@@ -11,3 +11,4 @@ std::vector<std::string> findFiles(const std::string& directory,
 Mat sharpen(Mat input);
 Mat unsharp_masking(Mat input);
 Mat setInitialLabelsGrayscale(int width, int height, int k);
+void printMatType(const Mat input);

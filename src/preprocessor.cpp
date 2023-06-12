@@ -9,6 +9,56 @@ using namespace std;
 using namespace cv;
 using namespace filesystem;
 
+void opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
+    double *minVal;
+    double *maxVal;
+
+    // original java code includes check for three channels and
+    // reshaping of data if needed, not sure it was ever used
+    // originally thought I might use color RBG images probably 
+
+
+    /* Setup data structure holding partitioned image data */
+    //Mat clustered_data(data.rows, data.cols, data.type(), Scalar(0));
+    centers.convertTo(centers, CV_8U); 
+    cout << centers << endl;
+    printMatType(centers);
+    printMatType(labels);
+    cout << centers.size().width << endl;
+    cout << centers.size().height << endl;
+    Mat res(labels.rows, labels.cols, CV_8U);
+    cout << "Res rows "  << labels.rows << endl;
+    cout << "Res cols "  << labels.cols << endl;
+    cout << "Res type ";
+    printMatType(res); 
+    cout << "Label " << labels.size().width << " by " << labels.size().height << endl;
+    for(int i = 0; i < res.rows;  i++) {
+        cout << "i=" << i << endl;
+            int label = labels.at<int>(i,0);
+            cout << label << endl;
+            res.at<uint8_t>(i,0) = centers.at<uint8_t>(label,0);
+            cout << "UGH" << res.at<uint8_t>(i,0) << endl;
+    }
+    
+    string fn = "blah.jpg";
+    string fn2 = "blah2.jpg";
+    Mat res2 = res.clone().reshape(1,data.rows);
+    cout << (int)res2.at<uint8_t>(0,0) << endl;
+    cout << (int)res2.at<uint8_t>(0,1) << endl;
+    cout << (int)res2.at<uint8_t>(0,2) << endl;
+    cout << (int)res2.at<uint8_t>(0,3) << endl;
+    cout << res2.size().height << endl;
+    cout << res2.size().width << endl;
+    imwrite(fn2, data);
+    imwrite(fn,res2);
+    exit(0);
+    // stats to keep here?
+
+    //Size imageSize = data.size();
+    //minMaxLoc(labels, minVal, maxVal, NULL);
+    return;
+} 
+
 int main(int argc, char* argv[]) {
     bool debugFlag = false;
     int k = 4;
@@ -121,7 +171,8 @@ int main(int argc, char* argv[]) {
         mergedMat.convertTo(matForKMeans, CV_32F);
 
         // Flatten image data for kmeans
-        Mat colVec = mergedMat.reshape(1, mergedMat.rows*mergedMat.cols);
+        Mat colVec = matForKMeans.clone().reshape(
+            1, matForKMeans.rows*matForKMeans.cols);
         Mat colVecFloat;
         colVec.convertTo(colVecFloat, CV_32F);
 
@@ -146,9 +197,13 @@ int main(int argc, char* argv[]) {
               or what was called opencv_kmeans_PostProcess in original Java code
         */
         Mat centers;
+        cout << colVecFloat.size().height << " by " << colVecFloat.size().width << endl;
         double compactness =
             kmeans(colVecFloat,k,labels, criteria, criteria.maxCount, flags, centers);
         cout << "Compactness=" << compactness << endl;
+        cout << centers << endl;
+
+        opencv_kmeans_postProcess(mergedMat, labels, centers);
     }
     return 0;
 }

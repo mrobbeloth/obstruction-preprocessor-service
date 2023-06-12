@@ -99,3 +99,23 @@ Mat setInitialLabelsGrayscale(int width, int height, int k) {
 
     return labels;
 }
+
+void printMatType(const Mat input) {
+    switch(input.type()) {
+        case CV_8U:
+             cout << "CV_8U" << endl;
+             break;
+        case CV_32S:
+             cout << "CV_32S" << endl;
+             break;    
+        case CV_32F:
+             cout << "CV_32F" << endl;
+             break;            
+        case CV_16F: 
+            cout << "CV_16F" << endl;
+            break;
+        default:
+            cout << "other";
+
+    }
+}
