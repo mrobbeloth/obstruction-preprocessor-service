@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(opencvTest VERSION 0.1.0 LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17) # Allows for usage of needed libraries
+
+include(CTest)
+enable_testing()
+
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS}) # Get opencv libraries
+add_executable(opencvTest test.cpp) # Include project files
+target_link_libraries(opencvTest ${OpenCV_LIBS}) # Link opencv libraries
+MESSAGE("OpenCV_LIBS: " ${OpenCV_LIBS}) # Display opencv libs found
+
+set(CPACK_PROJECT_NAME ${PROJECT_NAME})
+set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+include(CPack)
