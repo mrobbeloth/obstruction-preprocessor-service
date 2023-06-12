@@ -93,7 +93,7 @@ Mat setInitialLabelsGrayscale(int width, int height, int k) {
 
     while(count < k) {
         index += jump;
-        labels.at<Vec2i>(Point(count,0)) = index-1; 
+        labels.at<int>(count) = index - 1;
         count++;
     }
 

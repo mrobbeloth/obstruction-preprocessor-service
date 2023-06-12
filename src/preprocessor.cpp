@@ -145,11 +145,9 @@ int main(int argc, char* argv[]) {
               of image data iteself has to be done in a post-processing array
               or what was called opencv_kmeans_PostProcess in original Java code
         */
-        vector<Point2f> centers;
-        cout << "Before kmeans" << endl;
+        Mat centers;
         double compactness =
             kmeans(colVecFloat,k,labels, criteria, criteria.maxCount, flags, centers);
-        cout << "After kmeans" << endl;
         cout << "Compactness=" << compactness << endl;
     }
     return 0;
