@@ -176,9 +176,10 @@ int main(int argc, char* argv[]) {
         double compactness =
             kmeans(colVecFloat,k,labels, criteria, criteria.maxCount, flags, centers);
         cout << "Compactness=" << compactness << endl;
-        cout << centers << endl;
+    
+        Mat partitionedImage = opencv_kmeans_postProcess(mergedMat, labels, centers);
 
-        opencv_kmeans_postProcess(mergedMat, labels, centers);
+        
     }
     return 0;
 }

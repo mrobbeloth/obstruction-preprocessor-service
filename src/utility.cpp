@@ -74,7 +74,8 @@ Mat unsharp_masking(Mat input) {
 }
 
 //!
- /*! This method creates an evenly distributed set of initial center points
+ /*! 
+ \brief This method creates an evenly distributed set of initial center points
 to use with the OpenCV partitioning algorithm -- needed to ensure that partitioning
 between candidate and model images are similar -- e.g., the use of a fixed set of
 centroid locations will lower confidence matches to unacceptable levels.
@@ -100,22 +101,44 @@ Mat setInitialLabelsGrayscale(int width, int height, int k) {
     return labels;
 }
 
-void printMatType(const Mat input) {
+//!
+ /*! 
+ \brief This method identifies the type of OpenCV Matrix
+
+kmeans will squish 2d image into vector of values
+ * \param An OpenCV Matrix
+ * \return type of matrix
+*/
+string printMatType(const Mat input) {
+    string type;
     switch(input.type()) {
         case CV_8U:
-             cout << "CV_8U" << endl;
+             type = "CV_8U";
              break;
+        case CV_8S:
+             type = "CV_8S";
+             break;                   
+        case CV_16S:
+             type = "CV_16S";
+             break; 
+        case CV_16U:
+             type = "CV_16U";
+             break;         
+        case CV_16F:
+            type = "CV_16F";
+            break;                                   
         case CV_32S:
-             cout << "CV_32S" << endl;
-             break;    
+            type = "CV_32S";
+            break;    
         case CV_32F:
-             cout << "CV_32F" << endl;
-             break;            
-        case CV_16F: 
-            cout << "CV_16F" << endl;
-            break;
+             type = "CV_32F";
+             break;         
+        case CV_64F:
+            type = "CV_64F"; 
+             break;         
         default:
-            cout << "other";
+             type = "other";
 
     }
+    return type;
 }
