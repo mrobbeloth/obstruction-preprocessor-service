@@ -138,7 +138,32 @@ string printMatType(const Mat input) {
              break;         
         default:
              type = "other";
-
     }
     return type;
+}
+
+//!
+ /*! 
+ \brief This method saves an OpenCV matrix data to disk
+
+kmeans will squish 2d image into vector of values
+ * \param path path to save file on
+ * \param fn name of file to save matrix data to
+ * \param imageData OpenCV matrix data
+ * \return if operation was successful or not
+*/
+bool imageSave(string path, string fn, Mat imageData) {
+    /* check if path is valid */
+    if ((path.size()) > 0 && (!filesystem::exists(path)))
+        return false;
+
+    /* check if filename contains anything*/
+    if (fn.size() == 0) {
+        return false;
+    }
+
+    /* Sanity checks are good, try writing image data out to 
+        disk*/
+    bool result = imwrite(path+fn, imageData);
+    return result;
 }

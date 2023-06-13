@@ -22,7 +22,6 @@ Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
     /* Map each label to a cluster center */
     for(int i = 0; i < res.rows;  i++) {
             int label = labels.at<int>(i,0);
-            cout << label << endl;
             res.at<uint8_t>(i,0) = centers.at<uint8_t>(label,0);
     }
     
@@ -70,26 +69,24 @@ int main(int argc, char* argv[]) {
         cout << "working with file:" << entry << endl;
         Mat img_grayscale = imread(path+entry, IMREAD_GRAYSCALE);
         cout << "Image Size:" << img_grayscale.size << endl;
-        string outputFileName = "../output/"+entry;
         if (debugFlag) {
-            result = imwrite(outputFileName, img_grayscale);
+            result = imageSave("../output/", entry, img_grayscale);
             if (!result) {
-                cout << "Failed to write " << outputFileName << endl;
+                cerr << "Failed to write " << img_grayscale << endl;
             }
-        }
+        }            
+
         // Test if 8-bit unsigned
         int type = img_grayscale.type();
         if (type != CV_8U) {
             cout << "Converting " << entry << " to 8-bit unsigned grayscale" << endl;
             img_grayscale.convertTo(img_grayscale, CV_8U);
-
             if (debugFlag) {
-                string outputFileName = "../output/8U_"+entry;
-                result = imwrite(outputFileName, img_grayscale);
+                result = imageSave("../output/", "8U_"+entry, img_grayscale);
                 if (!result) {
-                    cout << "Failed to write " << outputFileName << endl;
+                    cerr << "Failed to write " << img_grayscale << endl;
                 }
-            }
+            }            
         }
 
         /* create a state of the image before preprocessing is done to use later in 
@@ -110,10 +107,10 @@ int main(int argc, char* argv[]) {
                             img_grayscale.type());
         GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
         if (debugFlag) {
-            string outputFileName = "../output/Gaussian_"+entry;
-            result = imwrite(outputFileName, gaussianApplied);
+            string fn = "Gaussian_"+entry;
+            result = imageSave("../output/", fn, gaussianApplied);
             if (!result) {
-                cout << "Failed to write " << outputFileName << endl;
+                cerr << "Failed to write " << fn << endl;
             }
         }
 
@@ -122,10 +119,10 @@ int main(int argc, char* argv[]) {
                             img_grayscale.type());
         sharpenApplied = sharpen(gaussianApplied);
         if (debugFlag) {
-            string outputFileName = "../output/Sharpen_"+entry;
-            result = imwrite(outputFileName, gaussianApplied);
+            string fn = "Sharpen_"+entry;
+            result = imageSave("../output/", fn, sharpenApplied);
             if (!result) {
-                cout << "Failed to write " << outputFileName << endl;
+                cerr << "Failed to write " << fn << endl;
             }
         }
 
@@ -134,10 +131,10 @@ int main(int argc, char* argv[]) {
                             img_grayscale.type());
         addWeighted(img_duplicate, 1.5, sharpenApplied,-0.5, 0, mergedMat);
         if (debugFlag) {
-            string outputFileName = "../output/Merged_"+entry;
-            result = imwrite(outputFileName, gaussianApplied);
+            string fn = "Merged_"+entry;
+            result = imageSave("../output/", fn, mergedMat);
             if (!result) {
-                cout << "Failed to write " << outputFileName << endl;
+                cerr << "Failed to write " << fn << endl;
             }
         }
 
@@ -172,14 +169,19 @@ int main(int argc, char* argv[]) {
               or what was called opencv_kmeans_PostProcess in original Java code
         */
         Mat centers;
-        cout << colVecFloat.size().height << " by " << colVecFloat.size().width << endl;
         double compactness =
             kmeans(colVecFloat,k,labels, criteria, criteria.maxCount, flags, centers);
         cout << "Compactness=" << compactness << endl;
     
         Mat partitionedImage = opencv_kmeans_postProcess(mergedMat, labels, centers);
+        if (debugFlag) {
+            string fn = "Partitioned_"+entry;
+            result = imageSave("../output/", "Partitioned_"+entry, partitionedImage);
+            if (!result) {
+                cerr << "Failed to write " << fn << endl;
+            }
+        }
 
-        
     }
     return 0;
 }

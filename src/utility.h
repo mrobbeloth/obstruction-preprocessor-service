@@ -12,3 +12,4 @@ Mat sharpen(Mat input);
 Mat unsharp_masking(Mat input);
 Mat setInitialLabelsGrayscale(int width, int height, int k);
 string printMatType(const Mat input);
+bool imageSave(string path, string fn, Mat imageData);
