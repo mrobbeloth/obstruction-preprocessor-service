@@ -3,11 +3,13 @@
 #include <opencv2/core/mat.hpp>
 #include <filesystem>
 #include <string>
+#include <chrono>
 #include "utility.h"
 
 using namespace std;
 using namespace cv;
 using namespace filesystem;
+using namespace chrono;
 
 Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
     // original java code includes check for three channels and
@@ -38,6 +40,9 @@ int main(int argc, char* argv[]) {
     int k = 4;
     int kMeansIterations = 16;
     int flags = KMEANS_PP_CENTERS; // 0x2
+
+    // start code timing 
+    auto start = chrono::high_resolution_clock::now();
 
     cout << "Starting PreProcessor Service" << endl;
     // check if debug mode is turned on or not
@@ -183,5 +188,9 @@ int main(int argc, char* argv[]) {
         }
 
     }
+
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::minutes>(end - start);
+    cout << "Preprocessing Execution time: " << duration.count() << " minutes" << endl;
     return 0;
 }
