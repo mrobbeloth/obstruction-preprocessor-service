@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
     }
 
     auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::minutes>(end - start);
-    cout << "Preprocessing Execution time: " << duration.count() << " minutes" << endl;
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    cout << "Preprocessing Execution time: " << duration.count() << " ms" << endl;
     return 0;
 }
