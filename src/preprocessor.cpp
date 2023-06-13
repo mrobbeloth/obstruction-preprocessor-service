@@ -9,54 +9,29 @@ using namespace std;
 using namespace cv;
 using namespace filesystem;
 
-void opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
-    double *minVal;
-    double *maxVal;
-
+Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
     // original java code includes check for three channels and
     // reshaping of data if needed, not sure it was ever used
     // originally thought I might use color RBG images probably 
 
-
-    /* Setup data structure holding partitioned image data */
-    //Mat clustered_data(data.rows, data.cols, data.type(), Scalar(0));
+    /* Cluster centers identify in image data are in signed 32-bit floating
+       point mode and need to be converted to 8-bit unsigned mode */
     centers.convertTo(centers, CV_8U); 
-    cout << centers << endl;
-    printMatType(centers);
-    printMatType(labels);
-    cout << centers.size().width << endl;
-    cout << centers.size().height << endl;
     Mat res(labels.rows, labels.cols, CV_8U);
-    cout << "Res rows "  << labels.rows << endl;
-    cout << "Res cols "  << labels.cols << endl;
-    cout << "Res type ";
-    printMatType(res); 
-    cout << "Label " << labels.size().width << " by " << labels.size().height << endl;
+
+    /* Map each label to a cluster center */
     for(int i = 0; i < res.rows;  i++) {
-        cout << "i=" << i << endl;
             int label = labels.at<int>(i,0);
             cout << label << endl;
             res.at<uint8_t>(i,0) = centers.at<uint8_t>(label,0);
-            cout << "UGH" << res.at<uint8_t>(i,0) << endl;
     }
     
-    string fn = "blah.jpg";
-    string fn2 = "blah2.jpg";
+    /* Turn partitioned data back into a format suitable as an 
+       image*/
     Mat res2 = res.clone().reshape(1,data.rows);
-    cout << (int)res2.at<uint8_t>(0,0) << endl;
-    cout << (int)res2.at<uint8_t>(0,1) << endl;
-    cout << (int)res2.at<uint8_t>(0,2) << endl;
-    cout << (int)res2.at<uint8_t>(0,3) << endl;
-    cout << res2.size().height << endl;
-    cout << res2.size().width << endl;
-    imwrite(fn2, data);
-    imwrite(fn,res2);
-    exit(0);
-    // stats to keep here?
 
-    //Size imageSize = data.size();
-    //minMaxLoc(labels, minVal, maxVal, NULL);
-    return;
+    /* return partitioned image */
+    return res2;
 } 
 
 int main(int argc, char* argv[]) {
