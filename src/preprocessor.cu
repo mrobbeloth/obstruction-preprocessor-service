@@ -12,28 +12,57 @@ using namespace std;
 using namespace cv;
 using namespace astp;
 
-void threadFunc(const int &i) {
+typedef void** kernelptr;
+
+void threadFunc(const int i) {
+    // Allocate memory on host
+    size_t size = sizeof(int);
+    int* hostIn = new int(i);
+    int* hostOut = new int();
+
     // Allocate memory on device
-    const int* in = &i;
-    int* out = nullptr;
-    auto err = cudaMalloc((void **)&out, sizeof(int));
+    int* kernelIn = nullptr;
+    auto err = cudaMalloc((kernelptr)&kernelIn, size);
+
+    int* kernelOut = nullptr;
+    err = cudaMalloc((kernelptr)&kernelOut, size);
 
     // Copy to device memory
-    err = cudaMemcpy(out, in, sizeof(int), cudaMemcpyHostToDevice);
+    err = cudaMemcpy(kernelIn, hostIn, size, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(kernelOut, hostOut, size, cudaMemcpyHostToDevice);
 
     // Call kernel
     int threadsPerBlock = 256;
-    int blocksPerGrid = threadsPerBlock / threadsPerBlock;
+    int blocksPerGrid = 1;
     cout << "CUDA kernel launch with " << blocksPerGrid << " blocks of " << threadsPerBlock << " threads" << endl;
-    multiplyByTen<<<blocksPerGrid, threadsPerBlock>>>(in, out);
+
+    multiplyByTen<<<blocksPerGrid, threadsPerBlock>>>(kernelIn, kernelOut);
     err = cudaGetLastError();
 
+    // Results
     if (err != cudaSuccess) {
-        fprintf(stderr, "Failed to launch multiplyByTen kernel (%s)!\n", cudaGetErrorString(err));
+        cerr << "Failed to launch kernel (" << cudaGetErrorString(err) << ")!" << endl;
         exit(EXIT_FAILURE);
-    } else {
-        cout << "ThreadPool " << i << endl;
+    } 
+    else {
+        // Copy from device memory
+        err = cudaMemcpy(hostOut, kernelOut, size, cudaMemcpyDeviceToHost);
+        if (err != cudaSuccess) {
+            cerr << "Failed to copy result from device to host (" << cudaGetErrorString(err) << ")!" << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        // Print result
+        cout << "ThreadPool " << *hostOut << endl;
     }
+
+    // Free GPU memory
+    err = cudaFree(kernelIn);
+    err = cudaFree(kernelOut);
+
+    // Free host memory
+    free(hostIn);
+    free(hostOut);
 }
 
 int main() {
