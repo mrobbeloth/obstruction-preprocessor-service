@@ -39,9 +39,9 @@ endforeach()
 
 # Add CUDA source files
 set(CUDA_SOURCE_FILES 
+    src/preprocessorKernels.h 
     src/preprocessor.cu 
-    src/utility.cpp 
-    src/BS_thread_pool.cpp
+    src/utility.cpp
 )
 
 # Add CUDA executable
