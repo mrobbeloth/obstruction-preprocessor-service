@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>SuperString - The most optimized string library for C++</title>
+
+        <!-- styles -->
+        <link rel="stylesheet" type="text/css" href="./css/pure.v0.5.0.min.css">
+        <link rel="stylesheet" type="text/css" href="./css/prismjs.v1.13.0.min.css">
+        <link rel="stylesheet" type="text/css" href="./css/style.css">
+    </head>
+    <body>
+        <!-- Github Ribbon -->
+        <a href="https://github.com/btwael/SuperString"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+        <!-- page content -->
+        <div class="center">
+            <div class="header">
+                <h1>SuperString</h1>
+                <h4>by <a href="https://github.com/btwael">Wael Boutglay</a></h4>
+            </div>
+            <div class="content">
+                <!-- Introduction -->
+                <h1 class="content-subhead" id="c-intro">Introduction</h1>
+                <p>SuperString is an efficient string library for C++, that achieves a remarkable memory and CPU optimization.</p>
+                <p>SuperString uses <a href="https://en.wikipedia.org/wiki/Rope_%28data_structure%29">Rope (data structure)</a> and optimization techniques.</p>
+                <!-- Features -->
+                <h1 class="content-subhead" id="c-features">Features</h1>
+                <ul>
+                    <li><b>Fast</b> and <b>Memory-optimized</b>.</li>
+                    <li>Automatically <b>garabage collected</b>.</li>
+                    <li>Support <b>ASCII</b>, <b>UTF-8</b>, <b>UTF-16BE</b> and <b>UTF-32</b>.</li>
+                    <li>Rich API.</li>
+                    <li>Easy to integrate and use.</li>
+                    <li><b>MIT Licence</b></li>
+                </ul>
+
+                <!-- Table of contents -->
+                <h1 class="content-subhead">Table of contents</h1>
+                <ol>
+                    <a href="#c-intro"><li>Introduction</li></a>
+                    <a href="#c-features"><li>Features</li></a>
+                    <li>Table of contents</li>
+                    <a href="#c-contri"><li>Contribute and support</li></a>
+                    <a href="#c-install"><li>Install and use
+                        <ol style="margin: 0">
+                            <a href="#c-install-cmake"><li>With CMake</li></a>
+                            <a href="#c-install-nocmake"><li>Without CMake</li></a>
+                        </ol>
+                    </li></a>
+                    <a href="#c-api"><li>API
+                        <ol style="margin: 0">
+                            <a href="#c-api-new"><li>Construct a new string</li></a>
+                            <a href="#c-api-static"><li>Static methods
+                                <ol style="margin: 0">
+                                    <a href="#c-api-static-const"><li>SuperString::Const</li></a>
+                                    <a href="#c-api-static-copy"><li>SuperString::Copy</li></a>
+                                </ol>
+                            </li></a>
+                            <a href="#c-api-methods"><li>Methods
+                                <ol style="margin: 0">
+                                    <a href="#c-api-methods-codeunitat"><li>codeUnitAt(index)</li></a>
+                                    <a href="#c-api-methods-indexof"><li>indexOf(pattern)</li></a>
+                                    <a href="#c-api-methods-isempty"><li>isEmpty()</li></a>
+                                    <a href="#c-api-methods-isnotempty"><li>isNotEmpty()</li></a>
+                                    <a href="#c-api-methods-lastindexof"><li>lastIndexOf(pattern)</li></a>
+                                    <a href="#c-api-methods-length"><li>length()</li></a>
+                                    <a href="#c-api-methods-print1"><li>print(stream)</li></a>
+                                    <a href="#c-api-methods-print2"><li>print(stream, startIndex, endIndex)</li></a>
+                                    <a href="#c-api-methods-substring"><li>substring(startIndex, endIndex)</li></a>
+                                    <a href="#c-api-methods-trim"><li>trim()</li></a>
+                                    <a href="#c-api-methods-trimleft"><li>trimLeft()</li></a>
+                                    <a href="#c-api-methods-trimright"><li>trimRight()</li></a>
+                                </ol>
+                            </li></a>
+                            <a href="#c-api-operators"><li>Operators
+                                <ol style="margin: 0">
+                                    <a href="#c-api-operators-time"><li>operator *</li></a>
+                                    <a href="#c-api-operators-plus"><li>operator +</li></a>
+                                </ol>
+                            </li></a>
+                            <a href="#c-api-types"><li>Nested types
+                                <ol style="margin: 0">
+                                    <a href="#c-api-types-encoding"><li>SuperString::Encoding</li></a>
+                                    <a href="#c-api-types-error"><li>SuperString::Error</li></a>
+                                    <a href="#c-api-types-byte"><li>SuperString::Byte</li></a>
+                                    <a href="#c-api-types-result"><li>SuperString::Result&lt;T, E></li></a>
+                                </ol>
+                            </li></a>
+                        </ol>
+                    </li></a>
+                </ol>
+                
+                <!-- Contribute and support -->
+                <h1 class="content-subhead" id="c-contri">Contribute and support</h1>
+                <p>You have any feature idea, a bug to correct or an improvement, feel free to <a href="https://github.com/btwael/SuperString/issues">open a issue</a> or <a href="https://github.com/btwael/SuperString/pulls">send your pull request</a>.</p>
+
+                <!-- Install -->
+                <h1 class="content-subhead" id="c-install">Install and use</h1>
+                <h2 class="content-subhead2" id="c-install-cmake">Using CMake</h2>
+                <p>In your project, clones <span class="inlinehl">SuperString</span> to a directory where third-party libraries live (let's call it <span class="inlinehl">ext</span>).
+                <pre><code class="language-bash">mkdir ext &amp;&amp; cd ext
+git clone https://github.com/btwael/SuperString.git</code></pre>
+                <p>Now, you will need to add those lines to your <span class="inlinehl">CMakeLists.txt</span></p>
+                <pre><code class="language-makefile"># include SuperString
+add_subdirectory(ext/SuperString)
+
+# add SuperString headers to include directory
+include_directories(ext/SuperString/include)
+
+# link your executable against SuperString 
+target_link_libraries(myexecutable SuperString)</code></pre>
+
+                <h2 class="content-subhead2" id="c-install-nocmake">Without CMake</h2>
+                <p>The header file that contains SuperString declarations is <span class="inlinehl">SuperString/include/SuperString.hh</span>, the source file that contains the definitions is <span class="inlinehl">SuperString/src/SuperString.cc</span>, use them as you prefer.</p>
+
+                <!-- API -->
+                <h1 class="content-subhead" id="c-api">API</h1>
+                <!-- API -> Construct a new string -->
+                <h2 class="content-subhead2" id="c-api-new">Construct a new string</h2>
+                <p>As mentioned above, SuperString is automatically garbage collected, so you don't have to think about how and when to free a SuperString instance. To allow this, there're are two way to create a SuperString using static method <span class="inlinehl">SuperString::Const</span> or <span class="inlinehl">SuperString::Copy</span>.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+SuperString myFunc() {
+    char chars[] = "I'm using SuperString!";
+    SuperString string = SuperString::Copy(chars);
+    return string;
+}
+
+char seq[] = "SuperString is cool!";
+
+int main(int argc, char const *argv[]) {
+    SuperString s1 = myFunc();
+    SuperString s2 = SuperString::Const(seq);
+    // equivalent to SuperString::Const("SuperString is cool!");
+    std::cout << s1 << "\n" << s2;
+    return 0;
+}</code></pre>
+                <p>In <span class="inlinehl">myFunc</span>, we used <span class="inlinehl">SuperString::Copy</span> because the sequence that we're building our string from, has a limited lifetime and well be deleted once the function returns, that why we use <span class="inlinehl">::Copy</span> to tell SuperString that we should copy the data and keep them for further use.</p>
+                <p>In the other hand, we used <span class="inlinehl">::Const</span> in <span class="inlinehl">main</span> because the sequence will live as long as the executable lives, that's important because SuperString will not copy the sequence to avoid memory redundancy.</p>
+
+                <!-- API -> static methods -->
+                <h2 class="content-subhead2" id="c-api-static">Static methods</h2>
+                <!-- API -> static -> SuperString::Const -->
+                <h3 class="content-subhead3" id="c-api-static-const">SuperString::Const</h3>
+                <div class="func-prototype">
+                    <span class="modifier">static</span> SuperString SuperString::<span class="token">Const</span>(<span class="modifier">const</span> <span class="keyword">char</span> *chars, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
+                </div>
+                <div class="func-prototype">
+                    <span class="modifier">static</span> SuperString SuperString::<span class="token">Const</span>(<span class="modifier">const</span> SuperString::<a class="keyword" href="#c-api-types-byte">Byte</a> *bytes, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
+                </div>
+                <p>This static method creates a new SuperString from a const sequence of characters of a given <a href="#c-api-types-encoding">supported encoding</a>, the encoding paramter has <span class="inlinehl">SuperString::Encoding::UTF8</span> as default value. This method does not replicate string data in memory</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+char asciiseq[] = "SuperString is cool!";
+SuperString::Byte utf8seq[] = {0xe2, 0x82, 0xac, 0x00};
+SuperString::Byte utf16beseq[] = {0x00, 0x24, 0x00, 0x00};
+int utf32seq[] = {0x10437, 0x0000};
+
+int main(int argc, char const *argv[]) {
+    SuperString s1 = SuperString::Const(asciiseq, SuperString::Encoding::ASCII);
+    SuperString s2 = SuperString::Const(utf8seq, SuperString::Encoding::UTF8);
+    SuperString s3 = SuperString::Const(utf16beseq, SuperString::Encoding::UTF16BE);
+    SuperString s4 = SuperString::Const(utf32seq, SuperString::Encoding::UTF32);
+    std::cout << s1 << "\n"; // SuperString is cool!
+    std::cout << s2 << "\n"; // €
+    std::cout << s3 << "\n"; // $
+    std::cout << s4 << "\n"; // 𐐷
+    return 0;
+}</code></pre>
+
+                <!-- API -> static SuperString::Copy -->
+                <h3 class="content-subhead3" id="c-api-static-copy">SuperString::Copy</h3>
+                <div class="func-prototype">
+                    <span class="modifier">static</span> SuperString SuperString::<span class="token">Copy</span>(<span class="modifier">const</span> <span class="keyword">char</span> *chars, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
+                </div>
+                <div class="func-prototype">
+                    <span class="modifier">static</span> SuperString SuperString::<span class="token">Copy</span>(<span class="modifier">const</span> SuperString::<a class="keyword" href="#c-api-types-byte">Byte</a> *bytes, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
+                </div>
+                <p>This static method creates a new SuperString from a const sequence of characters of a given <a href="#c-api-types-encoding">supported encoding</a>, the encoding paramter has <span class="inlinehl">SuperString::Encoding::UTF8</span> as default value. This method copys the given sequence to a new allocated memory space.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+SuperString getString(int i) {
+    char asciiseq[] = "SuperString is cool!";
+    SuperString::Byte utf8seq[] = {0xe2, 0x82, 0xac, 0x00};
+    SuperString::Byte utf16beseq[] = {0x00, 0x24, 0x00, 0x00};
+    int utf32seq[] = {0x10437, 0x0000};
+    switch(i) {
+        case 0:
+            return SuperString::Copy(asciiseq, SuperString::Encoding::ASCII);
+        case 1:
+            return SuperString::Copy(utf8seq, SuperString::Encoding::UTF8);
+        case 2:
+            return SuperString::Copy(utf16beseq, SuperString::Encoding::UTF16BE);
+        case 3:
+            return SuperString::Copy(utf32seq, SuperString::Encoding::UTF32);
+        default:
+            return SuperString::Copy("Nothing"); // by default this is UTF8
+    }
+}
+
+int main(int argc, char const *argv[]) {
+    std::cout << getString(0) << "\n"; // SuperString is cool!
+    std::cout << getString(1) << "\n"; // €
+    std::cout << getString(2) << "\n"; // $
+    std::cout << getString(3) << "\n"; // 𐐷
+    return 0;
+}</code></pre>
+
+                <!-- API ->  methods -->
+                <h2 class="content-subhead2" id="c-api-methods">Methods</h2>
+                <!-- API -> methods -> codeUnitAt() -->
+                <h3 class="content-subhead3" id="c-api-methods-codeunitat">codeUnitAt(index)</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;<a class="keyword">int</a>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">codeUnitAt</span>(std::<span class="keyword">size_t</span> index) <span class="modifier">const</span>;
+                </div>
+                <p>Returns the code unit at the given index, if index is less than the length of the string, if not, it returns <span class="inlinehl">SuperString::Error::RangeError</span>.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include &lt;cstddef>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString::Result&lt;int, SuperString::Error> res;
+    SuperString s = SuperString::Const("SuperString is fast!");
+
+    res = s.codeUnitAt(1);
+
+    if(res.isOk()) {
+        std::cout << "Valid index, code unit: " << res.ok() << "\n";
+    }
+
+    res = s.codeUnitAt(100);
+
+    if(res.isErr()) { // &amp;&amp; res.err() == SuperString::Error::RangeError
+        std::cout << "Range error\n";
+    }
+
+    for(std::size_t i = 0; i < s.length(); i++) {
+        std::cout << s.codeUnitAt(i).ok() << "\n"; // sometime it's just safe
+    }
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> indexOf() -->
+                <h3 class="content-subhead3" id="c-api-methods-indexof">indexOf(pattern)</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;std::<span class="keyword">size_t</span>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">indexOf</span>(SuperString other) <span class="modifier">const</span>;
+                </div>
+                <p>Returns the position of the first occurrence of other in this string, if not found, it returns <span class="inlinehl">SuperString::Error::NotFound</span>.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString::Result&lt;std::size_t, SuperString::Error> res;
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    res = s.indexOf(SuperString::Const("fast"));
+
+    if(res.isOk()) {
+        std::cout << res.ok() << "\n"; // 15
+    } else {
+        std::cout << "Not found" << "\n";
+    }
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> isEmpty() -->
+                <h3 class="content-subhead3" id="c-api-methods-isempty">isEmpty()</h3>
+                <div class="func-prototype">
+                    <span class="keyword">bool</span> <span class="token">isEmpty</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns true if this string is empty.</p>
+                <pre><code class="language-cpp">#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s1;
+    SuperString s2 = SuperString::Const("");
+    SuperString s3 = SuperString::Const("SuperString");
+
+    s1.isEmpty(); // true
+    s2.isEmpty(); // true
+    s3.isEmpty(); // false
+
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> isNotEmpty() -->
+                <h3 class="content-subhead3" id="c-api-methods-isnotempty">isNotEmpty()</h3>
+                <div class="func-prototype">
+                    <span class="keyword">bool</span> <span class="token">isNotEmpty</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns true if this string is not empty.</p>
+                <pre><code class="language-cpp">#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s1;
+    SuperString s2 = SuperString::Const("");
+    SuperString s3 = SuperString::Const("SuperString");
+
+    s1.isNotEmpty(); // false
+    s2.isNotEmpty(); // false
+    s3.isNotEmpty(); // true
+
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> codeUnitAt() -->
+                <h3 class="content-subhead3" id="c-api-methods-lastindexof">lastIndexOf(pattern)</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;std::<span class="keyword">size_t</span>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">lastIndexOf</span>(SuperString other) <span class="modifier">const</span>;
+                </div>
+                <p>Returns the position of the last occurrence of other in this string, if not found, it returns <span class="inlinehl">SuperString::Error::NotFound</span>.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString::Result&lt;std::size_t, SuperString::Error> res;
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    res = s.lastIndexOf(SuperString::Const("fast"));
+
+    if(res.isOk()) {
+        std::cout << res.ok() << "\n"; // 24
+    } else {
+        std::cout << "Not found" << "\n";
+    }
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> length() -->
+                <h3 class="content-subhead3" id="c-api-methods-length">length()</h3>
+                <div class="func-prototype">
+                    std::<span class="keyword">size_t</span> <span class="token">length</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns the length of this string.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+char asciiseq[] = "SuperString is cool!";
+SuperString::Byte utf8seq[] = {0xe2, 0x82, 0xac, 0x00};
+SuperString::Byte utf16beseq[] = {0x00, 0x24, 0x00, 0x00};
+int utf32seq[] = {0x10437, 0x0000};
+
+int main(int argc, char const *argv[]) {
+    SuperString s1 = SuperString::Const(asciiseq, SuperString::Encoding::ASCII);
+    SuperString s2 = SuperString::Const(utf8seq, SuperString::Encoding::UTF8);
+    SuperString s3 = SuperString::Const(utf16beseq, SuperString::Encoding::UTF16BE);
+    SuperString s4 = SuperString::Const(utf32seq, SuperString::Encoding::UTF32);
+    std::cout << s1.length() << "\n"; // 20
+    std::cout << s2.length() << "\n"; // 1
+    std::cout << s3.length() << "\n"; // 1
+    std::cout << s4.length() << "\n"; // 1
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> print() -->
+                <h3 class="content-subhead3" id="c-api-methods-print1">print(stream)</h3>
+                <div class="func-prototype">
+                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">print</span>(std::ostream &amp;stream) <span class="modifier">const</span>;
+                </div>
+                <p>Prints this string to the given stream.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    s.print(std::cout); // equivalent to: std::cout << s;
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> print() -->
+                <h3 class="content-subhead3" id="c-api-methods-print2">print(stream, startIndex, endIndex)</h3>
+                <div class="func-prototype">
+                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">print</span>(std::ostream &amp;stream, std::<span class="keyword">size_t</span> startIndex, std::<span class="keyword">size_t</span> endIndex) <span class="modifier">const</span>;
+                </div>
+                <p>Prints a substring of this string that starts at startIndex, inclusive and end at endIndex, exclusive.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    s.print(std::cout, 0, 11); // Will print: SuperString 
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> codeUnitAt() -->
+                <h3 class="content-subhead3" id="c-api-methods-substring">substring(startIndex, endIndex)</h3>
+                <div class="func-prototype">
+                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">substring</span>(std::<span class="keyword">size_t</span> startIndex, std::<span class="keyword">size_t</span> endIndex) <span class="modifier">const</span>;
+                </div>
+                <p>Returns the substring of this string that extends from startIndex, inclusive, to endIndex, exclusive.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString::Result&lt;SuperString, SuperString::Error> res;
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    res = s.substring(0, 11);
+
+    if(res.isOk()) {
+        std::cout << res.ok() << "\n"; // Will print: SuperString
+    } else {
+        std::cout << "Range error" << "\n";
+    }
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> trim() -->
+                <h3 class="content-subhead3" id="c-api-methods-trim">trim()</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">trim</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns the string without any leading and trailing whitespace.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("  \tSuperString  ");
+
+    std::cout << s.trim(); // Will print "SuperString" not "  \tSuperString  "
+
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> trimLeft() -->
+                <h3 class="content-subhead3" id="c-api-methods-trimleft">trimLeft()</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">trimLeft</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns the string without any leading whitespace.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("  \tSuperString  ");
+
+    std::cout << s.trimLeft(); // Will print "SuperString  " not "  \tSuperString  "
+
+    return 0;
+}</code></pre>
+
+                <!-- API -> methods -> trimRight() -->
+                <h3 class="content-subhead3" id="c-api-methods-trimright">trimRight()</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">trimRight</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns the string without any trailing whitespace.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("  \tSuperString  ");
+
+    std::cout << s.trimRight(); // Will print "  \tSuperString" not "  \tSuperString  "
+
+    return 0;
+}</code></pre>
+
+                <!-- API ->  operators -->
+                <h2 class="content-subhead2" id="c-api-operators">Operators</h2>
+                <!-- API -> operators -> * -->
+                <h3 class="content-subhead3" id="c-api-operators-time">operator *</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">operator*</span>(std::<span class="keyword">size_t</span> times) <span class="modifier">const</span>;
+                </div>
+                <p>Creates a new string that concatenate this string with itself a number of times.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("bla");
+    s = s * 3;
+
+    std::cout << s << "\n"; // blablabla
+    std::cout << s.substring(2, 7).ok() << "\n"; // ablab
+
+    return 0;
+}</code></pre>
+
+                <!-- API -> operators -> + -->
+                <h3 class="content-subhead3" id="c-api-operators-plus">operator +</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">operator+</span>(<span class="modifier">const</span> SuperString &amp;other) <span class="modifier">const</span>;
+                </div>
+                <p>Creates a new string by concatenating this string with other.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s1 = SuperString::Const("bla");
+    SuperString s2 = SuperString::Const("kla");
+    SuperString s = s1 + s2 + s1;
+
+    std::cout << s << "\n"; // blaklabla
+    std::cout << s.substring(2, 9).ok() << "\n"; // aklabla
+
+    return 0;
+}</code></pre>
+
+                <!-- API ->  nested types -->
+                <h2 class="content-subhead2" id="c-api-types">Nested types</h2>
+                <!-- API -> types -> encoding -->
+                <h3 class="content-subhead3" id="c-api-types-encoding">SuperString::Encoding</h3>
+                <p>This type is defined as fellow:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    enum class Encoding {
+        ASCII,
+        UTF8,
+        UTF16BE,
+        UTF32
+    };
+...
+};
+</code></pre>
+
+                <!-- API -> types -> error -->
+                <h3 class="content-subhead3" id="c-api-types-error">SuperString::Error</h3>
+                <p>This type is defined as fellow:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    enum class Error {
+        Unimplemented,
+        Unexpected, // Something that never happens, Unreachable code
+        RangeError,
+        InvalidByteSequence,
+        NotFound
+    };
+...
+};
+</code></pre>
+
+                <!-- API -> types -> byte -->
+                <h3 class="content-subhead3" id="c-api-types-byte">SuperString::Byte</h3>
+                <p>This type is defined as fellow:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    typedef unsigned char Byte;
+...
+};
+</code></pre>
+
+                <!-- API -> types -> result -->
+                <h3 class="content-subhead3" id="c-api-types-result">SuperString::Result&lt;T, E></h3>
+                <p>This type is inspired from Rust type <span class="inlinehl">std::Result&lt;T, E></span>, and defined as:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    template&lt;class T, class E>
+    class Result {
+    private:
+        char *_ok;
+        char *_err;
+
+    public:
+        Result(T ok);
+
+        Result(E err);
+
+        Result(const SuperString::Result&lt;T, E> &amp;other) /*copy*/;
+
+        ~Result();
+
+        /**
+         * Returns the error value.
+         */
+        E err() const;
+
+        /**
+         * Returns true if the result is Ok.
+         */
+        bool isErr() const;
+
+        /**
+         * Returns true if the result is Err.
+         */
+        bool isOk() const;
+
+        /**
+         * Returns the success value.
+         */
+        T ok() const;
+
+        /**
+         * Sets this to Err with given [err] value.
+         */
+        void err(E err);
+
+        /**
+         * Sets this to Ok with given [ok] value.
+         */
+        void ok(T ok);
+
+        SuperString::Result&lt;T, E> &amp;operator=(const SuperString::Result&lt;T, E> &amp;other);
+    };
+...
+};
+</code></pre>
+            </div>
+            <div class="footer">
+                © 2018 <a href="https://github.com/btwael">Wael Boutglay</a>
+            </div>
+        </div>
+
+        <!-- scripts -->
+        <script type="text/javascript" src="./js/prismjs.v1.13.0.min.js"></script>
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+            ga('create', 'UA-77708030-1', 'auto');
+            ga('send', 'pageview');
+        </script>
+    </body>
+</html>
