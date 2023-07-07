@@ -2,6 +2,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/cudaimgproc.hpp>
+#include <opencv2/cudafilters.hpp>
+#include <opencv2/core/cvstd.hpp>
 #include <filesystem>
 #include <string>
 #include <chrono>
@@ -156,21 +158,38 @@ int main(int argc, char* argv[]) {
            Alternatively we could use median blur or bilateral filter to
            try to reduce noise while keeping line edges */
         cout << "Applying Gaussian Blur" << endl;
-        //Filter gassuianFilter = cv::cuda::c2qreateGp
-        //    gpu_img_src.type(), gpu_img_src.type(), Size(5,5), 0, BORDER_DEFAULT);
         Mat gaussianApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
-        GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
-        cout << "Done applying Gaussian Blur" << endl;
-        if (debugFlag) {
-            string fn = "Gaussian_"+entry;
-           // gpu_img_dst.download(gaussianApplied);
-            
-            result = imageSave("../output/", fn, gaussianApplied);
-            if (!result) {
-                cerr << "Failed to write " << fn << endl;
+        if (GPUCnt > 0) {
+            Ptr<Filter> gaussianFilter = createGaussianFilter(
+                gpu_img_src.type(), gpu_img_src.type(), Size(5,5), 0.0, 0.0, BORDER_DEFAULT, -1);
+            gaussianFilter->apply(gpu_img_src, gpu_img_dst);
+
+            if (debugFlag) {
+                string fn = "Gaussian_"+entry;
+                gpu_img_dst.download(gaussianApplied);
+                
+                result = imageSave("../output/", fn, gaussianApplied);
+                if (!result) {
+                    cerr << "Failed to write " << fn << endl;
+                }
             }
         }
+        else {
+            GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
+
+            if (debugFlag) {
+                string fn = "Gaussian_"+entry;
+                
+                result = imageSave("../output/", fn, gaussianApplied);
+                if (!result) {
+                    cerr << "Failed to write " << fn << endl;
+                }
+            }
+
+        }
+        cout << "Done applying Gaussian Blur" << endl;
+
 
         /* follow up with sharpening */
         Mat sharpenApplied(img_grayscale.rows, img_grayscale.cols, 
