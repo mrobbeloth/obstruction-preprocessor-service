@@ -1,6 +1,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/cudaimgproc.hpp>
 #include <filesystem>
 #include <string>
 #include <chrono>
@@ -10,6 +11,7 @@ using namespace std;
 using namespace cv;
 using namespace filesystem;
 using namespace chrono;
+using namespace cuda;
 
 Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
     // original java code includes check for three channels and
@@ -36,10 +38,13 @@ Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
 } 
 
 int main(int argc, char* argv[]) {
-    bool debugFlag = false;
+    bool debugFlag = true;
     int k = 4;
     int kMeansIterations = 16;
     int flags = KMEANS_PP_CENTERS; // 0x2
+
+    int GPUCnt = getCudaEnabledDeviceCount();
+    cout << "Number of CUDA enabled devices: " << GPUCnt << endl;
 
     // start code timing 
     auto start = chrono::high_resolution_clock::now();
@@ -73,30 +78,72 @@ int main(int argc, char* argv[]) {
         // convert to grayscale
         cout << "working with file:" << entry << endl;
         Mat img_grayscale = imread(path+entry, IMREAD_GRAYSCALE);
-        cout << "Image Size:" << img_grayscale.size << endl;
+
+        GpuMat gpu_img_grayscale;
+        if (GPUCnt > 0) {
+            gpu_img_grayscale.upload(img_grayscale);
+            cout << "Image Size:" << gpu_img_grayscale.size() << endl;
+        }
+        else {
+            cout << "Image Size:" << img_grayscale.size() << endl;
+        }
+        
         if (debugFlag) {
+            if (GPUCnt > 0) {
+                gpu_img_grayscale.download(img_grayscale);
+            }
             result = imageSave("../output/", entry, img_grayscale);
             if (!result) {
                 cerr << "Failed to write " << img_grayscale << endl;
             }
         }            
 
-        // Test if 8-bit unsigned
-        int type = img_grayscale.type();
-        if (type != CV_8U) {
-            cout << "Converting " << entry << " to 8-bit unsigned grayscale" << endl;
-            img_grayscale.convertTo(img_grayscale, CV_8U);
-            if (debugFlag) {
-                result = imageSave("../output/", "8U_"+entry, img_grayscale);
-                if (!result) {
-                    cerr << "Failed to write " << img_grayscale << endl;
-                }
-            }            
+        // Test for GPU
+        if (GPUCnt > 0) {
+            int type = gpu_img_grayscale.type();
+            // Test if 8-bit unsigned grayscale
+            if (type != CV_8U) {
+                cout << "Converting " << entry << " to 8-bit unsigned grayscale" << endl;
+                gpu_img_grayscale.convertTo(gpu_img_grayscale, CV_8U);
+                if (debugFlag) {
+                    gpu_img_grayscale.download(img_grayscale);
+                    result = imageSave("../output/", "8U_"+entry, img_grayscale);
+                    if (!result) {
+                        cerr << "Failed to write " << img_grayscale << endl;
+                    }
+                }            
+            }
+            else {
+                cout << "Image is already 8-bit unsigned grayscale" << endl;
+            }
+        }
+        else {
+            // CPU only
+            int type = img_grayscale.type();
+            // Test if 8-bit unsigned grayscale
+            if (type != CV_8U) {
+                cout << "Converting " << entry << " to 8-bit unsigned grayscale" << endl;
+                img_grayscale.convertTo(img_grayscale, CV_8U);
+                if (debugFlag) {
+                    result = imageSave("../output/", "8U_"+entry, img_grayscale);
+                    if (!result) {
+                        cerr << "Failed to write " << img_grayscale << endl;
+                    }
+                }         
+            }
+            else {
+                cout << "Image is already 8-bit unsigned grayscale" << endl;
+            }
         }
 
         /* create a state of the image before preprocessing is done to use later in 
            following sharpen operation */
         Mat img_duplicate = img_grayscale.clone();
+        GpuMat gpu_img_src, gpu_img_dst; 
+        
+        if (GPUCnt > 0) {
+          gpu_img_src = gpu_img_grayscale.clone();
+        }
 
         /* Gaussian Blur image to reduce noise from original image. Will need
            to follow-up with edge detection 
@@ -108,11 +155,17 @@ int main(int argc, char* argv[]) {
            
            Alternatively we could use median blur or bilateral filter to
            try to reduce noise while keeping line edges */
+        cout << "Applying Gaussian Blur" << endl;
+        //Filter gassuianFilter = cv::cuda::c2qreateGp
+        //    gpu_img_src.type(), gpu_img_src.type(), Size(5,5), 0, BORDER_DEFAULT);
         Mat gaussianApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
         GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
+        cout << "Done applying Gaussian Blur" << endl;
         if (debugFlag) {
             string fn = "Gaussian_"+entry;
+           // gpu_img_dst.download(gaussianApplied);
+            
             result = imageSave("../output/", fn, gaussianApplied);
             if (!result) {
                 cerr << "Failed to write " << fn << endl;
