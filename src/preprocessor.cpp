@@ -108,8 +108,8 @@ int main(int argc, char* argv[]) {
             if (type != CV_8U) {
                 cout << "Converting " << entry << " to 8-bit unsigned grayscale" << endl;
                 gpu_img_grayscale.convertTo(gpu_img_grayscale, CV_8U);
+                gpu_img_grayscale.download(img_grayscale);
                 if (debugFlag) {
-                    gpu_img_grayscale.download(img_grayscale);
                     result = imageSave("../output/", "8U_"+entry, img_grayscale);
                     if (!result) {
                         cerr << "Failed to write " << img_grayscale << endl;
@@ -168,11 +168,9 @@ int main(int argc, char* argv[]) {
             Ptr<Filter> gaussianFilter = createGaussianFilter(
                 gpu_img_src.type(), gpu_img_src.type(), Size(5,5), 0.0, 0.0, BORDER_DEFAULT, -1);
             gaussianFilter->apply(gpu_img_src, gpu_img_dst);
-
+            gpu_img_dst.download(gaussianApplied);  
             if (debugFlag) {
-                string fn = "Gaussian_"+entry;
-                gpu_img_dst.download(gaussianApplied);
-                
+                string fn = "Gaussian_"+entry;              
                 result = imageSave("../output/", fn, gaussianApplied);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
@@ -183,8 +181,7 @@ int main(int argc, char* argv[]) {
             GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
 
             if (debugFlag) {
-                string fn = "Gaussian_"+entry;
-                
+                string fn = "Gaussian_"+entry;   
                 result = imageSave("../output/", fn, gaussianApplied);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
@@ -201,10 +198,10 @@ int main(int argc, char* argv[]) {
         GpuMat gpu_img_sharpened;
         if (GPUCnt > 0) {
             gpu_img_sharpened = sharpenGPU(gpu_img_dst);
+            gpu_img_sharpened.download(sharpenApplied);
             if (debugFlag) {
                 cout << "Applied GPU Sharpen Bilateral filter" << endl;
                 string fn = "Sharpen_"+entry;
-                gpu_img_sharpened.download(sharpenApplied);
                 result = imageSave("../output/", fn, sharpenApplied);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
@@ -229,10 +226,10 @@ int main(int argc, char* argv[]) {
         GpuMat gpuMergedMat;
         if (GPUCnt > 0) {  
             cv::cuda::addWeighted(gpu_img_duplicate, 1.5, gpu_img_sharpened,-0.5, 0, gpuMergedMat);
+            gpuMergedMat.download(mergedMat);
             if (debugFlag) {
                 cout << "Used GPU to merge original image with preprocessed image" << endl;
                 string fn = "Merged_"+entry;
-                gpuMergedMat.download(mergedMat);
                 result = imageSave("../output/", fn, mergedMat);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
