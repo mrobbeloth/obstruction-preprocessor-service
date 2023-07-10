@@ -4,6 +4,7 @@
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudafilters.hpp>
 #include <opencv2/core/cvstd.hpp>
+#include <opencv2/cudaarithm.hpp>
 #include <filesystem>
 #include <string>
 #include <chrono>
@@ -141,10 +142,12 @@ int main(int argc, char* argv[]) {
         /* create a state of the image before preprocessing is done to use later in 
            following sharpen operation */
         Mat img_duplicate = img_grayscale.clone();
+        GpuMat gpu_img_duplicate; 
         GpuMat gpu_img_src, gpu_img_dst; 
         
         if (GPUCnt > 0) {
           gpu_img_src = gpu_img_grayscale.clone();
+          gpu_img_duplicate = gpu_img_grayscale.clone();
         }
 
         /* Gaussian Blur image to reduce noise from original image. Will need
@@ -195,8 +198,9 @@ int main(int argc, char* argv[]) {
         /* follow up with sharpening */
         Mat sharpenApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
+        GpuMat gpu_img_sharpened;
         if (GPUCnt > 0) {
-           GpuMat gpu_img_sharpened = sharpenGPU(gpu_img_dst);
+            gpu_img_sharpened = sharpenGPU(gpu_img_dst);
             if (debugFlag) {
                 cout << "Applied GPU Sharpen Bilateral filter" << endl;
                 string fn = "Sharpen_"+entry;
@@ -221,13 +225,32 @@ int main(int argc, char* argv[]) {
 
         // Merge original image with preprocessed image for clearest shape
         Mat mergedMat(img_grayscale.rows, img_grayscale.cols, 
-                            img_grayscale.type());
-        addWeighted(img_duplicate, 1.5, sharpenApplied,-0.5, 0, mergedMat);
-        if (debugFlag) {
-            string fn = "Merged_"+entry;
-            result = imageSave("../output/", fn, mergedMat);
-            if (!result) {
-                cerr << "Failed to write " << fn << endl;
+                    img_grayscale.type());
+        if (GPUCnt > 0) {
+            GpuMat gpuMergedMat;
+            cv::cuda::addWeighted(gpu_img_duplicate, 1.5, gpu_img_sharpened,-0.5, 0, gpuMergedMat);
+            if (debugFlag) {
+                cout << "Used GPU to merge original image with preprocessed image" << endl;
+                string fn = "Merged_"+entry;
+                gpuMergedMat.download(mergedMat);
+                result = imageSave("../output/", fn, mergedMat);
+                if (!result) {
+                    cerr << "Failed to write " << fn << endl;
+                }
+            }
+        }
+        else {
+            Mat mergedMat(img_grayscale.rows, img_grayscale.cols, 
+                                img_grayscale.type());
+            cv::addWeighted(img_duplicate, 1.5, sharpenApplied,-0.5, 0, mergedMat);
+
+            if (debugFlag) {
+                cout << "Used CPU to merge original image with preprocessed image" << endl;
+                string fn = "Merged_"+entry;
+                result = imageSave("../output/", fn, mergedMat);
+                if (!result) {
+                    cerr << "Failed to write " << fn << endl;
+                }
             }
         }
 
