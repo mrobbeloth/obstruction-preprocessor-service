@@ -51,6 +51,21 @@ Mat sharpen(Mat input) {
 }
 
 //!
+/*!
+ * Sharpen the image
+ * \param input -- input array
+ * \return sharpened array
+*/
+GpuMat sharpenGPU(GpuMat input) {
+    Point anchor(-1,-1);
+    GpuMat output(input.rows, input.cols, input.type());
+    
+    /* Note that bilteralFilter is in the cudaimgproc library, not cudafilters*/
+    cv::cuda::bilateralFilter(input, output, 9, 50, 50);
+    return output;
+}
+
+//!
  /*! Unsharp masking
      create blurred/"unsharp", negative image to create a mask of the original image. 
      Combine w/ original positive image 

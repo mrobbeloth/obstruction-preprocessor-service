@@ -160,6 +160,7 @@ int main(int argc, char* argv[]) {
         cout << "Applying Gaussian Blur" << endl;
         Mat gaussianApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
+
         if (GPUCnt > 0) {
             Ptr<Filter> gaussianFilter = createGaussianFilter(
                 gpu_img_src.type(), gpu_img_src.type(), Size(5,5), 0.0, 0.0, BORDER_DEFAULT, -1);
@@ -194,12 +195,27 @@ int main(int argc, char* argv[]) {
         /* follow up with sharpening */
         Mat sharpenApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
-        sharpenApplied = sharpen(gaussianApplied);
-        if (debugFlag) {
-            string fn = "Sharpen_"+entry;
-            result = imageSave("../output/", fn, sharpenApplied);
-            if (!result) {
-                cerr << "Failed to write " << fn << endl;
+        if (GPUCnt > 0) {
+           GpuMat gpu_img_sharpened = sharpenGPU(gpu_img_dst);
+            if (debugFlag) {
+                cout << "Applied GPU Sharpen Bilateral filter" << endl;
+                string fn = "Sharpen_"+entry;
+                gpu_img_sharpened.download(sharpenApplied);
+                result = imageSave("../output/", fn, sharpenApplied);
+                if (!result) {
+                    cerr << "Failed to write " << fn << endl;
+                }
+            }
+        }
+        else {
+            sharpenApplied = sharpen(gaussianApplied);
+            if (debugFlag) {
+                cout << "Applied CPU Sharpen Bilateral filter" << endl;
+                string fn = "Sharpen_"+entry;
+                result = imageSave("../output/", fn, sharpenApplied);
+                if (!result) {
+                    cerr << "Failed to write " << fn << endl;
+                }
             }
         }
 

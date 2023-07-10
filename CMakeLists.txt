@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(preprocessor src/preprocessor.cpp src/utility.cpp)
 
-target_link_libraries(preprocessor opencv_core opencv_imgcodecs opencv_imgproc opencv_cudafilters)
+target_link_libraries(preprocessor opencv_core opencv_imgcodecs opencv_imgproc opencv_cudaimgproc opencv_cudafilters)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
