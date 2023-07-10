@@ -59,7 +59,7 @@ Mat sharpen(Mat input) {
 GpuMat sharpenGPU(GpuMat input) {
     Point anchor(-1,-1);
     GpuMat output(input.rows, input.cols, input.type());
-    
+
     /* Note that bilteralFilter is in the cudaimgproc library, not cudafilters*/
     cv::cuda::bilateralFilter(input, output, 9, 50, 50);
     return output;

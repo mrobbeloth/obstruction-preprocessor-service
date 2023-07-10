@@ -226,8 +226,8 @@ int main(int argc, char* argv[]) {
         // Merge original image with preprocessed image for clearest shape
         Mat mergedMat(img_grayscale.rows, img_grayscale.cols, 
                     img_grayscale.type());
-        if (GPUCnt > 0) {
-            GpuMat gpuMergedMat;
+        GpuMat gpuMergedMat;
+        if (GPUCnt > 0) {  
             cv::cuda::addWeighted(gpu_img_duplicate, 1.5, gpu_img_sharpened,-0.5, 0, gpuMergedMat);
             if (debugFlag) {
                 cout << "Used GPU to merge original image with preprocessed image" << endl;
@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Need to convert data to 32F for kmeans partitioning
+        // Need to convert data to 32F for kmeans partitioning    
         Mat matForKMeans(mergedMat.rows, mergedMat.cols, CV_32F);
         mergedMat.convertTo(matForKMeans, CV_32F);
 
@@ -267,7 +267,7 @@ int main(int argc, char* argv[]) {
         Mat labels = setInitialLabelsGrayscale(matForKMeans.rows, matForKMeans.cols, 
                                                 k);
         TermCriteria criteria(TermCriteria::Type::EPS+TermCriteria::Type::MAX_ITER,
-                              kMeansIterations, 1.0);
+                            kMeansIterations, 1.0);            
         
         /*criteria is no more than x change in pixel centers or y iterations
           attempts is number of times to use algorithm using different init labeling
