@@ -1,0 +1,60 @@
+lspci | grep -i nvidia
+uname -m && cat /etc/*release
+gcc --version
+sudo apt install gcc
+uname -r						(5.19.0-46-generic)
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda
+sudo apt-get install linux-headers-$(uname -r)
+sudo apt-key del 7fa2af80
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+echo "deb [signed-by=/usr/share/keyrings/cuda-archive-keyring.gpg] https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /" | sudo tee /etc/apt/sources.list.d/cuda-ubuntu2204-x86_64.list
+sudo apt-get update
+sudo apt-get install cuda
+sudo apt-get install nvidia-gds
+sudo reboot
+export PATH=/usr/local/cuda-12.2/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda-12.2/lib64\
+                         ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+cd /lib/udev
+sudo apt install vim
+cd rules.d
+sudo cp /lib/udev/rules.d/40-vm-hotadd.rules /etc/udev/rules.d
+sudo sed -i '/SUBSYSTEM=="memory", ACTION=="add"/d' /etc/udev/rules.d/40-vm-hotadd.rules
+sudo apt install git
+cd ~/
+sudo git clone https://github.com/NVIDIA/cuda-samples.git
+cd cuda-samples/Samples/0_Introduction
+sudo make
+cat /proc/driver/nvidia/version
+cd ~/
+cuda-samples/Samples/1_Utilities/deviceQuery/deviceQuery
+cuda-samples/Samples/1_Utilities/bandwidthTest/bandwidthTest 
+sudo apt-get install g++ freeglut3-dev build-essential libx11-dev     libxmu-dev libxi-dev libglu1-mesa-dev libfreeimage-dev libglfw3-dev
+cd ~/Downloads
+sudo snap install curl
+curl -O "https://us.download.nvidia.com/tesla/535.54.03/nvidia-driver-local-repo-ubuntu2204-535.54.03_1.0-1_amd64.deb"
+sudo apt-get install gdebi 
+sudo cp /var/nvidia-driver-local-repo-ubuntu2204-535.54.03/nvidia-driver-local-D69FCCEA-keyring.gpg /usr/share/keyrings/
+sudo gdebi nvidia-driver-local-repo-ubuntu2204-535.54.03_1.0-1_amd64.deb
+sudo reboot
+sudo apt-get install zlib1g
+
+// MUST DOWNLOAD FROM THE WEBSITE
+xdg-open "https://developer.nvidia.com/cudnn"
+read -s -r -p "YOU MUST DOWNLOAD CUDNN TO DOWNLOADS BEFORE CONTINUING!!! Press enter once you've finished."
+echo "Resuming..."
+cd ~/Downloads
+sudo cp /var/cudnn-local-repo-cross-sbsa-ubuntu2204-8.9.3.28/cudnn-local-046F9092-keyring.gpg /usr/share/keyrings/
+sudo gdebi cudnn-local-repo-cross-sbsa-ubuntu2204-8.9.3.28_1.0-1_all.deb 
+cd ~/
+sudo apt-get install libcudnn8=8.9.3.28-1+cuda12.1
+sudo apt-get install libcudnn8-dev=8.9.3.28-1+cuda12.1
+sudo apt-get install libcudnn8-samples=8.9.3.28-1+cuda12.1
+cp -r /usr/src/cudnn_samples_v8/ $HOME
+cd  $HOME/cudnn_samples_v8/mnistCUDNN
+make clean && make
+./mnistCUDNN
