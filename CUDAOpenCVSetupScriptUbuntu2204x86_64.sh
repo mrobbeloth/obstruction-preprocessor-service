@@ -120,12 +120,12 @@ echo "Final Install Block Completed. Rebooting in 10..."
 sleep 10
 sudo reboot
 else
+sudo sed -i -e '$a\OpenCV_DIR=~/opencv/build' environment
 unset OPENCV_COMPILED
 unset CUDA_DONE
 unset DRIVER_INSTALLED
 unset CUDA_INSTALLED
 sudo apt-get autoremove
+thisscript=$0
+shred -u ${thisscript}
 fi
-
-
-
