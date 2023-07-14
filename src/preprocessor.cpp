@@ -34,7 +34,7 @@ Mat ScanSegments(Mat I, bool debug) {
     for(int i = 0; i < rows; i++) {
         for(int j = 0; j < cols; j++) {
             if (I.at<uint8_t>(i,j) == 0) {
-                I.at<uint8_t>(i,j) = 1.0;
+                I.at<uint8_t>(i,j) = 1;
             } 
         }
     }
