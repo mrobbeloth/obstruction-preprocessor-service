@@ -16,6 +16,76 @@ using namespace filesystem;
 using namespace chrono;
 using namespace cuda;
 
+Mat ScanSegments(Mat I, bool debug) {
+
+    // verify basic charcteristics of image
+    int rows = I.rows;
+    int cols = I.cols;
+    int channels = I.channels();
+
+    if (debug) {
+        cout << "rows=" << rows << " cols=" << cols << " channels=" 
+             << channels << endl;
+    }
+
+    // prepare a vector of binary segments from grayscale image
+    vector<Mat> segments;
+
+    for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+            if (I.at<uint8_t>(i,j) == 0) {
+                I.at<uint8_t>(i,j) = 1.0;
+            } 
+        }
+    }
+
+    // convert the input image to double precision
+    Mat Temp = I.clone();
+    I.convertTo(Temp, I.type());
+
+    // find the first non-zero location
+    vector<Point> points = findInMat(I, 1, "first");
+
+    int n = 1;
+    int indx = -1;
+    int indy = -1;
+
+    if(points.size() > 0) {
+        indx = points[0].x;
+        indy = points[0].y;
+    }
+
+    // keep goint while we still have regions to process
+    if (debug) {
+        cout << "ScanSegments(): starting to process regions" << endl;
+    }
+
+    while (points.size() > 0) {
+        int i = indx;
+        int j = indy;
+
+        /*pass the image segment to the region growing code along with the
+          coordiantes of the seed and max intensity distance of 1x10e-5
+        
+        This tends to eat the k-means segmented image starting at the start
+        pixel. When the original segmented image is consumed, then we are
+        done scanning for segments */
+
+        if(debug) {
+            cout << "ScanSegments(): calling region growing code" << endl;
+        }
+
+        // vector<Mat> JAndTemp =
+        //TODO regiongrowing code here
+
+        /* TODO pad the array and opy the extracted image segment with its 
+           grown region into it */
+    }
+
+    //TODO placeholder
+    return Mat();
+}
+
 Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
     // original java code includes check for three channels and
     // reshaping of data if needed, not sure it was ever used
@@ -251,7 +321,8 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Need to convert data to 32F for kmeans partitioning    
+        // Need to convert data to 32F for kmeans partitioning  
+        // This code section is not amenable to GPU processing  
         Mat matForKMeans(mergedMat.rows, mergedMat.cols, CV_32F);
         mergedMat.convertTo(matForKMeans, CV_32F);
 
@@ -296,6 +367,9 @@ int main(int argc, char* argv[]) {
         }
 
     }
+
+    /* Scan partitioned or clustered data and produce one binary image for each segment */
+
 
     auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);

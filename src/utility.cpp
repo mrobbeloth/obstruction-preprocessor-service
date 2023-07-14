@@ -182,3 +182,58 @@ bool imageSave(string path, string fn, Mat imageData) {
     bool result = imwrite(path+fn, imageData);
     return result;
 }
+
+//!
+ /*! 
+ \brief Limited version of findInMat operator from MatLab. 
+ Basically find k instances of a  non-zero entry in an input
+ array starting from the beginning or end of the input array
+
+ * \param input data to find non-zero values in
+ * \param k nnumber of entries to find
+ * \param direction start at beginning ("first") or end ("last")
+ * \return the list of non-zero indeices from input data x=row, y=col
+*/
+vector<Point> findInMat(Mat input, int k, string direction) {
+    vector<Point> locNonZeroElements;
+
+    if(direction == "first") {
+        int rows = input.rows;
+        int cols = input.cols;
+        for(int i = 0; i < rows; i++) {
+            for(int j = 0; j < cols; j++) {
+                int value = input.at<uint8_t>(i,j);
+                if (value != 0) {
+                    Point p(i,j);
+                    locNonZeroElements.push_back(p);
+                }
+
+                if (locNonZeroElements.size() == k) {
+                    return locNonZeroElements;
+                }
+            }
+        }
+    }
+    else if (direction == "last") {
+        int rows = input.rows;
+        int cols = input.cols;
+        for(int i = rows; i > 0; i--) {
+            for(int j = cols; j > 0; j--) {
+                int value = input.at<uint8_t>(i,j);
+                if (value != 0) {
+                    Point p(i,j);
+                    locNonZeroElements.push_back(p);
+                }
+
+                if (locNonZeroElements.size() == k) {
+                    return locNonZeroElements;
+                }
+            }
+        }        
+    }
+    else {
+        cerr << "Invalid direction specified" << endl;
+        return locNonZeroElements;
+    }
+        
+}
