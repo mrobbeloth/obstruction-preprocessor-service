@@ -108,6 +108,8 @@ cd opencv
 sudo mkdir build
 cd build
 sudo apt-get install cmake
+echo "Be sure to stop and change '-DCUDA_ARCH_BIN=6.1' to your actual version if you have not already. You may look this up in https://developer.nvidia.com/cuda-gpus"
+sleep 10
 sudo cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local  -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules/ -DBUILD_EXAMPLES=ON  -DWITH_CUDA=ON  -DBUILD_DOCS=ON -DCUDA_ARCH_BIN=6.1 -DCMAKE_CXX_FLAGS=-std=c++11 ..
 sudo sed -i '114s/^[\t ]*if (weight != 1.0)/\t if ((double)weight != 1.0)/' ~/opencv/modules/dnn/src/cuda4dnn/primitives/normalize_bbox.hpp
 sudo sed -i '124s/^[\t ]*if (nms_iou_threshold > 0)/\t if ((double)nms_iou_threshold > 0)/' ~/opencv/modules/dnn/src/cuda4dnn/primitives/region.hpp 
