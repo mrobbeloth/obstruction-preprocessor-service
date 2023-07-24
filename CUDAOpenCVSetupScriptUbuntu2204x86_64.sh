@@ -111,9 +111,9 @@ sudo apt-get install cmake
 sudo cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local  -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules/ -DBUILD_EXAMPLES=ON  -DWITH_CUDA=ON  -DBUILD_DOCS=ON -DCUDA_ARCH_BIN=6.1 -DCMAKE_CXX_FLAGS=-std=c++11 ..
 sudo sed -i '114s/^[\t ]*if (weight != 1.0)/\t if ((double)weight != 1.0)/' ~/opencv/modules/dnn/src/cuda4dnn/primitives/normalize_bbox.hpp
 sudo sed -i '124s/^[\t ]*if (nms_iou_threshold > 0)/\t if ((double)nms_iou_threshold > 0)/' ~/opencv/modules/dnn/src/cuda4dnn/primitives/region.hpp 
-make -j$(nproc)
+sudo make -j$(nproc)
 sudo make install
-make clean
+sudo make clean
 cd /etc
 sudo sed -i -e '$a\OPENCV_COMPILED=done' environment
 echo "Final Install Block Completed. Rebooting in 10..."
