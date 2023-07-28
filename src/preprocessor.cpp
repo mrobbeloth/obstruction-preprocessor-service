@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <string>
 #include <chrono>
+#include <limits>
 #include "utility.h"
 
 using namespace std;
@@ -16,6 +17,165 @@ using namespace filesystem;
 using namespace chrono;
 using namespace cuda;
 
+//!
+ /*! Region bsead image segmentatino method. Performs region growining in an
+     image from a specified seedpoint (x,y). 
+
+     The region is iteratively grown by comparing all unallocated neighboring
+     pixels to the region. The difference between a pixel's intensity value
+     and the region's mean, is used as a measure of similarity. The pixel
+     with the smallest difference measured this way is allocated to the
+     respective region. This process  continues unti the intensity
+     difference between region mean and new pixel become larger than a 
+     certain threshold (t)
+
+     Properties:
+     All pixels must be in a region
+     Pixels must be connected
+     Regions should be disjoint (share border?)
+     Pixels have approixmately same grayscale
+     Some predicate determines how two pixels are different (intensity
+     differences, see above)
+
+     Points to remember:
+     Selecting seed points is important
+     Helps to have connectivity or pixel adjacent information
+     Minimum area threshold (min size of segment) could be tweaked
+     Similarity threshold value - if diff or set of pixels is less than some 
+     value, all part of same region
+
+ * \param I -- input matrix or image
+ * \param x -- x coordinate of seedpoint
+ * \param y -- y coordinate of seedpoint
+ * \param reg_maxdist -- maximum intensity distance between region and new pixel
+ * \return logical output image of region (J in the original matlab code)
+ * */
+vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist, 
+                          bool debug = false) {
+    vector<Mat> JandTemp;
+    class Neighbor {
+        Point pt;
+        double px;
+
+        public: 
+        Neighbor() {
+            pt.x = 0;
+            pt.y = 0;
+            px = 0.0;
+        }
+
+        Neighbor(Point pt, double px) {
+            this->pt = pt;
+            this->px = px;
+        }
+    };
+
+    // Sanity check 1
+    if (reg_maxdist == 0.0) {
+        reg_maxdist = 0.2;
+    }
+
+    // Sanity check 2
+    /* In the Kroon code, the user will select a non-zero point to use that
+       gets rounded. This is hard to do in this code at this time, will 
+       defer implementation
+       
+       if(exist('y','var')==0), figure, imshow(I, []); [y,x]=getpts;
+       y=round(y(1)); x=round(x(1)); end */
+    if (&I == nullptr) {
+        cerr << "regionGrowing(): inupt matrix is null, bad things will "
+             << "happen now" << endl;
+    }
+
+    // Create output image and get dimensions
+    if (debug == true) {
+        cout << "regiongrowing(): I is:" << I << endl;
+    }
+    Mat J(I.size() , I.type(), Scalar(0));
+    int rows = I.rows;
+    int cols = I.cols;
+
+    /* Use the seedpoint as the mean of the segmented region 
+       (see archived matlab code) */
+    double reg_mean = I.at<double>(x,y);  
+
+    // set the number of pixels in the region
+    int reg_size = 1;
+
+    // Free memory to  store neighbors of the segmented region
+    int neg_free = 10000;
+    int neg_pos = 0;    
+
+    vector<Neighbor> neg_list(neg_free);
+
+    // Distance of the region newest pixel to the region mean
+    double pixdist = 0;
+
+    // Neighbor locations (footprint)
+    if (debug) {
+        cout << "regionGrowing(): start neighbor pixel processing" << endl;
+    }
+
+    int neigb[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    while((pixdist < reg_maxdist) && (reg_size < I.total())) {
+        // Add new neighbors pixels
+        for(int j =0; j < 4; j++) {
+            // Calculate the neighbour coordinate
+            int xn = x + neigb[j][0];
+            int yn = y + neigb[j][1];
+
+            // Check if neighbour is inside or outside the image
+            bool ins = (xn > 0) && (yn > 0) && (xn < rows) && (yn < cols);
+
+            // Add neighbor if inside and not already part of the segmented area
+            /* In Java version, there is a check for get/at returning null and
+               if it is not null, then we add a zero to output[0]. I think that
+               was a sideeffect of how get works in Java and opencv bindings */
+            if (ins && (J.at<double>(xn,yn) == 0)) {
+                neg_pos = neg_pos + 1;
+                Point p(xn, yn);
+                Neighbor n(p, I.at<double>(xn,yn));
+                neg_list.push_back(n);
+                J.at<double>(xn,yn) = 1.0;
+            }
+        } // end for loop
+
+        // Add a new block of free memory
+        if (debug) {
+            cout << "regiongrowing(): testing to see if adding new block of"
+                 << " of memory is needed" << endl;
+        }
+
+        if (neg_pos + 10 > neg_free) {
+            neg_free = neg_free + 10000;
+            neg_list.resize(neg_free);
+        }
+
+        // Add pixel with intensity nearest to the mean of the region
+        double min_dist = numeric_limits<double>::max();
+        Neighbor minNeighbor;
+        Neighbor curNeighbor;
+        if(debug) {
+            cout << "regiongrowing(): add pixel with intensity nearest mean" 
+                 << " of region" << endl;
+        }
+
+        for(int neg_pos_cnt = 0; neg_pos_cnt < neg_pos; neg_pos_cnt++) {
+            // TODO: implement
+        }
+
+    }
+
+
+    return JandTemp;
+}
+
+//!
+ /*! 
+
+* \param I -- input matrix or image
+* \param debug -- generate debug output
+*/
 Mat ScanSegments(Mat I, bool debug) {
 
     // verify basic charcteristics of image
@@ -75,7 +235,7 @@ Mat ScanSegments(Mat I, bool debug) {
             cout << "ScanSegments(): calling region growing code" << endl;
         }
 
-        // vector<Mat> JAndTemp =
+        vector<Mat> JAndTemp = regionGrowing(I, i, j, 1e-5);
         //TODO regiongrowing code here
 
         /* TODO pad the array and opy the extracted image segment with its 
