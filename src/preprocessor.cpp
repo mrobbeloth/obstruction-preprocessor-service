@@ -61,13 +61,21 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         Neighbor() {
             pt.x = 0;
             pt.y = 0;
-            px = 0.0;
         }
 
         Neighbor(Point pt, double px) {
             this->pt = pt;
             this->px = px;
         }
+
+        Point getPoint() {
+            return pt;
+        }
+
+        double getValue() {
+            return px;
+        }
+        
     };
 
     // Sanity check 1
@@ -153,18 +161,63 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
 
         // Add pixel with intensity nearest to the mean of the region
         double min_dist = numeric_limits<double>::max();
-        Neighbor minNeighbor;
-        Neighbor curNeighbor;
+        Neighbor *minNeighbor = nullptr;
+        Neighbor *curNeighbor = nullptr;
         if(debug) {
             cout << "regiongrowing(): add pixel with intensity nearest mean" 
                  << " of region" << endl;
         }
 
         for(int neg_pos_cnt = 0; neg_pos_cnt < neg_pos; neg_pos_cnt++) {
-            // TODO: implement
+            *curNeighbor = neg_list.at(neg_pos_cnt);
+
+            double value;
+            if (curNeighbor != nullptr) {
+                value = curNeighbor->getValue();
+            }
+            else {
+                cerr << "regiongrowing(): cur neighbor was null, "<<
+                        " setting value to zero" << endl;
+                value = 0.0;
+            }
+
+            double dist = abs(value - reg_mean);
+
+            if (dist < min_dist) {
+                min_dist = dist;
+                minNeighbor = curNeighbor;
+            }
         }
 
+        if (debug) {
+            cout << "regiongrowing(): done adding pixel with intensity nearest mean of region" << endl;
+        }
+        J.at<double>(x,y) = 2.0;
+        reg_size++;
+
+        // Calculate the new mean of the region
+        if(minNeighbor != nullptr){
+            // update best min pixel distance
+            pixdist = min_dist;
+
+            reg_mean = ((reg_mean*reg_size) + minNeighbor->getValue()) / (reg_size + 1);
+
+            // Save the x and y coordinates of the pixel (for the neighbour add proccess)
+            Point pForUpdate = minNeighbor->getPoint();
+            x = pForUpdate.x;
+            y = pForUpdate.y;
+
+            // Remove the pixel from the neighbor (check) list
+            neg_list.erase(std::find(neg_list.begin(), neg_list.end(), minNeighbor));
+            neg_pos--;
+        }
     }
+    if (debug) {
+        cout << "regiongrowing(): done with neighbor pixel processing" << endl;
+    }
+
+    // TODO return segmented area, mremove pixesl from region processed, and package
+    // everything up for return;
 
 
     return JandTemp;
