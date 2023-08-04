@@ -111,10 +111,12 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
     int reg_size = 1;
 
     // Free memory to  store neighbors of the segmented region
-    int neg_free = 10000;
-    int neg_pos = 0;    
+    // in matlab and java code, identifier neg means neighbor
+    int neighbors_free = 10000;
+    int neighbor_pos = 0;    
 
-    vector<Neighbor> neg_list(neg_free);
+    // Keep track of the neighbors that still have to be processed
+    vector<Neighbor> neighbor_list(neighbors_free);
 
     // Distance of the region newest pixel to the region mean
     double pixdist = 0;
@@ -138,12 +140,16 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
             // Add neighbor if inside and not already part of the segmented area
             /* In Java version, there is a check for get/at returning null and
                if it is not null, then we add a zero to output[0]. I think that
-               was a sideeffect of how get works in Java and opencv bindings */
-            if (ins && (J.at<double>(xn,yn) == 0)) {
-                neg_pos = neg_pos + 1;
+               was a sideeffect of how get works in Java and opencv bindings 
+               
+               if (ins && (J.get(xn,yn) != null)) {
+                outputPt[0] = J.get(xn,yn)[0];
+                }*/
+            if (ins && J.at<double>(xn,yn) == 0) {
+                neighbor_pos = neighbor_pos + 1;
                 Point p(xn, yn);
                 Neighbor n(p, I.at<double>(xn,yn));
-                neg_list.push_back(n);
+                neighbor_list.push_back(n);
                 J.at<double>(xn,yn) = 1.0;
             }
         } // end for loop
@@ -153,10 +159,9 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
             cout << "regiongrowing(): testing to see if adding new block of"
                  << " of memory is needed" << endl;
         }
-
-        if (neg_pos + 10 > neg_free) {
-            neg_free = neg_free + 10000;
-            neg_list.resize(neg_free);
+        if (neighbor_pos + 10 > neighbors_free) {
+            neighbors_free = neighbors_free + 10000;
+            neighbor_list.resize(neighbors_free);
         }
 
         // Add pixel with intensity nearest to the mean of the region
@@ -168,8 +173,8 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
                  << " of region" << endl;
         }
 
-        for(int neg_pos_cnt = 0; neg_pos_cnt < neg_pos; neg_pos_cnt++) {
-            *curNeighbor = neg_list.at(neg_pos_cnt);
+        for(int neg_pos_cnt = 0; neg_pos_cnt < neighbor_pos; neg_pos_cnt++) {
+            *curNeighbor = neighbor_list.at(neg_pos_cnt);
 
             double value;
             if (curNeighbor != nullptr) {
@@ -208,8 +213,8 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
             y = pForUpdate.y;
 
             // Remove the pixel from the neighbor (check) list
-            neg_list.erase(std::find(neg_list.begin(), neg_list.end(), minNeighbor));
-            neg_pos--;
+            neighbor_list.erase(std::find(neighbor_list.begin(), neighbor_list.end(), minNeighbor));
+            neighbor_pos--;
         }
     }
     if (debug) {
@@ -218,7 +223,30 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
 
     // TODO return segmented area, mremove pixesl from region processed, and package
     // everything up for return;
+    // Return the segmented area as logical matrix
+    // J = J > 1;
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (J.at<double>(i,j) > 1) {
+                J.at<double>(i,j) = 1;
+            }
+            else {
+                J.at<double>(i,j) = 0;
+            }
+        }
+    }
 
+    // Remove pixels from region image that have been processed
+    for(int i  = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+            if (J.at<double>(i,j) == 1) {
+                I.at<double>(i,j) = 0;
+            }
+        }
+    }
+
+    // Package data structures 
+    JandTemp.push_back(J);
 
     return JandTemp;
 }
