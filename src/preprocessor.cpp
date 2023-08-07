@@ -174,8 +174,14 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         }
 
         for(int neg_pos_cnt = 0; neg_pos_cnt < neighbor_pos; neg_pos_cnt++) {
-            *curNeighbor = neighbor_list.at(neg_pos_cnt);
-
+            if (&neighbor_list.at(neg_pos_cnt) != nullptr) {
+                *curNeighbor = neighbor_list.at(neg_pos_cnt);
+            }
+            else {
+                cerr << "regiongrowing(): neighbor list was null, skipping" << endl;
+                continue;
+            }
+            
             double value;
             if (curNeighbor != nullptr) {
                 value = curNeighbor->getValue();
