@@ -1,4 +1,5 @@
 #include <iostream>
+#include <bits/stdc++.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/cudaimgproc.hpp>
@@ -74,6 +75,12 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
 
         double getValue() {
             return px;
+        }
+
+        bool operator==(Neighbor* argument) const
+        {
+            return (argument->pt.x == pt.x) && (argument->pt.y == pt.y) &&
+                   (argument->px == px);
         }
         
     };
@@ -252,7 +259,8 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
     }
 
     // Package data structures 
-    JandTemp.push_back(J);
+    JandTemp.push_back(J); //output image
+    JandTemp.push_back(I); // input image with processed pixels removed
 
     return JandTemp;
 }
@@ -323,10 +331,24 @@ Mat ScanSegments(Mat I, bool debug) {
         }
 
         vector<Mat> JAndTemp = regionGrowing(I, i, j, 1e-5);
-        //TODO regiongrowing code here
+        if (debug) {
+            cout << "ScanSegments(): done calling region growing code" << endl;
+        }
 
-        /* TODO pad the array and opy the extracted image segment with its 
+        // Extract the output image (J) and modified input image (I). 
+        // Put I into Temp for next bit of code 
+        Mat output_region_image = JAndTemp[0];
+        Mat Temp = JAndTemp[1];
+
+        /* TODO pad the array and copy the extracted image segment with its 
            grown region into it */
+        Mat padded(output_region_image.rows, output_region_image.cols, 
+                   output_region_image.type(), Scalar(0));
+        int padding = 3;
+
+        if (&output_region_image != nullptr) {
+            
+        }
     }
 
     //TODO placeholder

@@ -233,7 +233,6 @@ vector<Point> findInMat(Mat input, int k, string direction) {
     }
     else {
         cerr << "Invalid direction specified" << endl;
-        return locNonZeroElements;
     }
-        
+    return locNonZeroElements ; 
 }
