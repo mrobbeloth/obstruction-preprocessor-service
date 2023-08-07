@@ -13,7 +13,7 @@ include_directories(AFTER /usr/local/include/opencv2/)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_executable(preprocessor src/preprocessor.cpp src/utility.cpp)
+add_executable(preprocessor src/preprocessor.cpp src/utility.cpp src/CompositeMat.cpp)
 
 target_link_libraries(preprocessor opencv_core opencv_imgcodecs opencv_imgproc opencv_cudaimgproc opencv_cudafilters)
 

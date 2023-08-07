@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdio.h>
+#include <iostream>
 #include <bits/stdc++.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
@@ -11,6 +13,7 @@
 #include <chrono>
 #include <limits>
 #include "utility.h"
+#include "CompositeMat.h"
 
 using namespace std;
 using namespace cv;
@@ -106,6 +109,7 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
     if (debug == true) {
         cout << "regiongrowing(): I is:" << I << endl;
     }
+
     Mat J(I.size() , I.type(), Scalar(0));
     int rows = I.rows;
     int cols = I.cols;
@@ -271,7 +275,11 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
 * \param I -- input matrix or image
 * \param debug -- generate debug output
 */
-Mat ScanSegments(Mat I, bool debug) {
+CompositeMat ScanSegments(Mat I, bool debug) {
+    // Capture Timing information
+    using Clock = std::chrono::high_resolution_clock;
+    vector <chrono::nanoseconds> scanTimes = {};
+    Mat Temp = {};
 
     // verify basic charcteristics of image
     int rows = I.rows;
@@ -295,7 +303,7 @@ Mat ScanSegments(Mat I, bool debug) {
     }
 
     // convert the input image to double precision
-    Mat Temp = I.clone();
+    Temp = I.clone();
     I.convertTo(Temp, I.type());
 
     // find the first non-zero location
@@ -315,9 +323,13 @@ Mat ScanSegments(Mat I, bool debug) {
         cout << "ScanSegments(): starting to process regions" << endl;
     }
 
-    while (points.size() > 0) {
+    while ((points.size() > 0) || (&points != nullptr)) {
+        // get the next set of nonzero indices that is pixel of region
         int i = indx;
         int j = indy;
+
+        // Start timing code for segment
+        auto tic = Clock::now();
 
         /*pass the image segment to the region growing code along with the
           coordiantes of the seed and max intensity distance of 1x10e-5
@@ -347,12 +359,40 @@ Mat ScanSegments(Mat I, bool debug) {
         int padding = 3;
 
         if (&output_region_image != nullptr) {
-            
+            padded.create(output_region_image.rows + 2*padding, 
+                          output_region_image.cols + 2*padding, 
+                          output_region_image.type());
+            padded.setTo(Scalar(0));
+            Rect rect(padding, padding, output_region_image.cols, 
+                      output_region_image.rows);
+            Mat paddedPortion = padded(rect);
+            output_region_image.copyTo(paddedPortion);
+
+            /* Assign padded array to Segment structure that gets
+               returned to caller */
+            segments.push_back(padded);
         }
+
+        // increment for storing  next image segment
+        n++;
+        if (debug) {
+            cout << "ScanSegments(): Preparing for segment " << n << endl;            
+        }
+
+        // finish timing gwork on current segment
+        auto toc = Clock::now();
+        auto segTime = toc - tic; // substraction overload makes it nanoseconds
+        scanTimes.push_back(segTime);
+
     }
 
-    //TODO placeholder
-    return Mat();
+    // Package it all up for the return trip
+    Mat allScanTimes(1, scanTimes.size(), CV_64F);
+    for(chrono::nanoseconds scanTime : scanTimes) {
+        allScanTimes.push_back((double)scanTime.count());
+    }
+    CompositeMat compositeSetMats(segments, allScanTimes);
+    return compositeSetMats;
 }
 
 Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
@@ -415,7 +455,7 @@ int main(int argc, char* argv[]) {
     int fileRemoved = remove_all("../output");
     string path = "../data/coil-100/";
     bool result = create_directory("../output");
-    vector<string> files =findFiles(path, ".png");
+    vector<string> files =findFiles(path, ".png");    
     for (const string& entry : files) {     
         // convert to grayscale
         cout << "working with file:" << entry << endl;
@@ -635,9 +675,31 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        /* Scan partitioned or clustered data and produce one binary image for each segment 
+            TODO!!!! */
+        if (debugFlag) {
+            cout << "Calling ScanSegments()" << endl;
+        }
+        CompositeMat cm = ScanSegments(partitionedImage, false);
+        if (debugFlag) {
+            cout << "Finished ScanSegments" << endl;
+        }
+        cm.setFileName(entry);
+        vector<Mat> cm_al_ms = cm.getListofMats();
+        int segCnt = 0;
+        for(Mat m : cm_al_ms) {
+            Mat n(m.rows, m.cols, m.type());
+            if(m.type() != CV_8U) {
+                m.convertTo(n, CV_8U);
+            }
+            else {
+                n = m;
+            }
+        }
+
+        // TODO Start canny, dilate, and other ops here
     }
 
-    /* Scan partitioned or clustered data and produce one binary image for each segment */
 
 
     auto end = chrono::high_resolution_clock::now();
