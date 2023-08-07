@@ -349,11 +349,17 @@ CompositeMat ScanSegments(Mat I, bool debug) {
 
         // Extract the output image (J) and modified input image (I). 
         // Put I into Temp for next bit of code 
+        if (debug) {
+            cout << "ScanSegments(): extracting Mat arrays from regionGrowing" << endl;
+        }
         Mat output_region_image = JAndTemp[0];
         Mat Temp = JAndTemp[1];
 
-        /* TODO pad the array and copy the extracted image segment with its 
+        /* Pad the array and copy the extracted image segment with its 
            grown region into it */
+        if (debug) {
+            cout << "ScanSegments(): start padding process" << endl;
+        }
         Mat padded(output_region_image.rows, output_region_image.cols, 
                    output_region_image.type(), Scalar(0));
         int padding = 3;
@@ -371,6 +377,11 @@ CompositeMat ScanSegments(Mat I, bool debug) {
             /* Assign padded array to Segment structure that gets
                returned to caller */
             segments.push_back(padded);
+
+            if (debug) {
+                cout << "ScanSegments(): finished padding process and "
+                     << "pushed segment back into vector" << endl;
+            }   
         }
 
         // increment for storing  next image segment
@@ -680,7 +691,7 @@ int main(int argc, char* argv[]) {
         if (debugFlag) {
             cout << "Calling ScanSegments()" << endl;
         }
-        CompositeMat cm = ScanSegments(partitionedImage, false);
+        CompositeMat cm = ScanSegments(partitionedImage, true);
         if (debugFlag) {
             cout << "Finished ScanSegments" << endl;
         }
