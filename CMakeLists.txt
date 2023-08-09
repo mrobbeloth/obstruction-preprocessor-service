@@ -12,6 +12,7 @@ include_directories(AFTER /usr/local/include/opencv2/)
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} opencv_cudafeatures2d opencv_cudaimgproc")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(preprocessor src/preprocessor.cpp src/utility.cpp src/CompositeMat.cpp)
 

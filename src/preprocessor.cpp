@@ -352,16 +352,49 @@ CompositeMat ScanSegments(Mat I, bool debug) {
         if (debug) {
             cout << "ScanSegments(): extracting Mat arrays from regionGrowing" << endl;
         }
-        Mat output_region_image = JAndTemp[0];
-        Mat Temp = JAndTemp[1];
+
+        /* Right now I need to copy pixel by pixel between the two arrays. 
+           If I do not do so, I get a malloc allocation error 
+           "(unsigned long) (size) >= (unsigned long) (nb)" 
+           I tried using pointer assignment, clone, and copyTo without
+           success */
+        int nSizesJ[] = {JAndTemp.at(0).rows, JAndTemp.at(0).cols};
+        Mat output_region_image(1, nSizesJ, JAndTemp.at(0).type());
+        int nSizesTemp[] = {JAndTemp.at(1).rows, JAndTemp.at(1).cols};
+        Mat Temp(1, nSizesTemp, JAndTemp.at(1).type());
+        cout << "Done allocating arrays for JAndTemp"  << endl;
+        if(&JAndTemp != nullptr) {
+            cout << "Null pointer not detected with JAndTemp capacity at "  
+                 << JAndTemp.capacity() << endl;
+            for(int i = 0; i < nSizesJ[0]; i++) {
+                for (int j = 0; j < nSizesJ[1]; j++) {
+                    cout << "In the array (" << i << "," << j << ")" << endl;
+                    output_region_image.at<uint8_t>(i,j) = JAndTemp[0].at<uint8_t>(i,j);
+                }
+            }
+            // JAndTemp.at(0).copyTo(output_region_image);
+            cout << "Extracted the first element of JAndTemp" << endl;
+           // JAndTemp.at(1).copyTo(Temp);
+             for(int i = 0; i < nSizesTemp[0]; i++) {
+                for (int j = 0; j < nSizesTemp[1]; j++) {
+                    cout << "In the array (" << i << "," << j << ")" << endl;
+                    Temp.at<uint8_t>(i,j) = JAndTemp[1].at<uint8_t>(i,j);
+                }
+            }
+        }
+        else {
+            cerr << "ScanSegments(): JAndTemp was null, skipping" << endl;
+            continue;
+        }
 
         /* Pad the array and copy the extracted image segment with its 
            grown region into it */
-        if (debug) {
-            cout << "ScanSegments(): start padding process" << endl;
-        }
         Mat padded(output_region_image.rows, output_region_image.cols, 
                    output_region_image.type(), Scalar(0));
+        if (debug) {
+            cout << "ScanSegments(): allocated padded array" << endl;
+            cout << endl;
+        }
         int padding = 3;
 
         if (&output_region_image != nullptr) {
