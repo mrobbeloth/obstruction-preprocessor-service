@@ -72,6 +72,16 @@
         "valarray": "cpp",
         "variant": "cpp",
         "__nullptr": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "__node_handle": "cpp",
+        "__split_buffer": "cpp",
+        "queue": "cpp",
+        "stack": "cpp",
+        "locale": "cpp",
+        "__bit_reference": "cpp",
+        "__functional_base": "cpp",
+        "__memory": "cpp",
+        "scoped_allocator": "cpp",
+        "__locale": "cpp"
     }
 }

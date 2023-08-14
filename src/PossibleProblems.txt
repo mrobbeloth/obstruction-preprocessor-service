@@ -1,0 +1,12 @@
+// Created a risky typedef in code conversion to comply with later calls
+LGAlgorithm.hpp line 494: cuda::minMaxLoc(*labels, &mmlr.minVal, &mmlr.maxVal, &mmlr.minLoc, &mmlr.maxLoc);
+
+// RGB vs BGR. Might have to swap [0] with [2] in the calls on the following 3 lines
+LGAlgorithm.hpp line 521: clustered_data->at<Vec3b>(y, x)[2] = ((lab ... 
+
+// ->at<...>(x, y, z) may be a problem with image color. May have to use ->at<Vec3B>(x, y)[z]
+LGAlgorithm.hpp many lines...
+
+// Line 200 changed LGAlgorithm CompositeMat * to non *
+
+//KMEANSNGBCONTAINER CLASS IS BUGGED AND WILL NOT WORK!!!!
