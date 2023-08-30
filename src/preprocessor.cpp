@@ -238,10 +238,13 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         cout << "regiongrowing(): done with neighbor pixel processing" << endl;
     }
 
-    // TODO return segmented area, mremove pixesl from region processed, and package
+    // TODO return segmented area, remove pixes from region processed, and package
     // everything up for return;
     // Return the segmented area as logical matrix
     // J = J > 1;
+    if (debug) {
+        cout << "regiongrowing(): look for pixels in J > 1 and set to 1" << endl;
+    }
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             if (J.at<double>(i,j) > 1) {
@@ -253,6 +256,9 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         }
     }
 
+    if (debug) {
+        cout << "Remove pixels from region processed" << endl;
+    }
     // Remove pixels from region image that have been processed
     for(int i  = 0; i < rows; i++) {
         for(int j = 0; j < cols; j++) {
@@ -263,8 +269,24 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
     }
 
     // Package data structures 
-    JandTemp.push_back(J); //output image
-    JandTemp.push_back(I); // input image with processed pixels removed
+    if (debug) {
+        cout << "regiongrowing(): package data structures for return, "
+             << "start w/ output image" << endl;
+    }
+    JandTemp.push_back(J.clone()); //output image
+    if (debug) {
+        cout << "Package input image w/ processed pixels removed" << endl;
+    }
+    JandTemp.push_back(I.clone()); // input image with processed pixels removed    
+    
+    // free(): invalid pointer occuring from here back to caller
+    // attempt 1 to correct
+    J.release();
+    I.release();
+   
+    // attempt 2 to correct, enable all, get "double free or corruption (!prev)""
+    neighbor_list.clear();
+    delete[] neighbor_list.data();
 
     return JandTemp;
 }
@@ -342,7 +364,7 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
             cout << "ScanSegments(): calling region growing code" << endl;
         }
 
-        vector<Mat> JAndTemp = regionGrowing(I, i, j, 1e-5);
+        vector<Mat> JAndTemp = regionGrowing(I, i, j, 1e-5, true);
         if (debug) {
             cout << "ScanSegments(): done calling region growing code" << endl;
         }
