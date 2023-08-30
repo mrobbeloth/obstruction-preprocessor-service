@@ -275,7 +275,7 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
 * \param I -- input matrix or image
 * \param debug -- generate debug output
 */
-CompositeMat ScanSegments(Mat I, bool debug) {
+CompositeMat ScanSegments(Mat I, string filename, bool debug) {
     // Capture Timing information
     using Clock = std::chrono::high_resolution_clock;
     vector <chrono::nanoseconds> scanTimes = {};
@@ -362,22 +362,16 @@ CompositeMat ScanSegments(Mat I, bool debug) {
         Mat output_region_image(1, nSizesJ, JAndTemp.at(0).type());
         int nSizesTemp[] = {JAndTemp.at(1).rows, JAndTemp.at(1).cols};
         Mat Temp(1, nSizesTemp, JAndTemp.at(1).type());
-        cout << "Done allocating arrays for JAndTemp"  << endl;
         if(&JAndTemp != nullptr) {
-            cout << "Null pointer not detected with JAndTemp capacity at "  
-                 << JAndTemp.capacity() << endl;
             for(int i = 0; i < nSizesJ[0]; i++) {
                 for (int j = 0; j < nSizesJ[1]; j++) {
-                    cout << "In the array (" << i << "," << j << ")" << endl;
                     output_region_image.at<uint8_t>(i,j) = JAndTemp[0].at<uint8_t>(i,j);
                 }
             }
             // JAndTemp.at(0).copyTo(output_region_image);
-            cout << "Extracted the first element of JAndTemp" << endl;
            // JAndTemp.at(1).copyTo(Temp);
              for(int i = 0; i < nSizesTemp[0]; i++) {
                 for (int j = 0; j < nSizesTemp[1]; j++) {
-                    cout << "In the array (" << i << "," << j << ")" << endl;
                     Temp.at<uint8_t>(i,j) = JAndTemp[1].at<uint8_t>(i,j);
                 }
             }
@@ -402,10 +396,10 @@ CompositeMat ScanSegments(Mat I, bool debug) {
                           output_region_image.cols + 2*padding, 
                           output_region_image.type());
             padded.setTo(Scalar(0));
-            Rect rect(padding, padding, output_region_image.cols, 
-                      output_region_image.rows);
-            Mat paddedPortion = padded(rect);
-            output_region_image.copyTo(paddedPortion);
+            //Rect rect(0, 0, output_region_image.cols, 
+             //         output_region_image.rows);
+            //Mat paddedPortion = padded(rect);
+            output_region_image.copyTo(padded);
 
             /* Assign padded array to Segment structure that gets
                returned to caller */
@@ -414,6 +408,10 @@ CompositeMat ScanSegments(Mat I, bool debug) {
             if (debug) {
                 cout << "ScanSegments(): finished padding process and "
                      << "pushed segment back into vector" << endl;
+                bool saveResult = imageSave("../output/", "padded_"+filename, padded);
+                if(saveResult == false) {
+                    cerr << "ScanSegments(): failed to save padded image" << endl;
+                }
             }   
         }
 
@@ -724,7 +722,7 @@ int main(int argc, char* argv[]) {
         if (debugFlag) {
             cout << "Calling ScanSegments()" << endl;
         }
-        CompositeMat cm = ScanSegments(partitionedImage, true);
+        CompositeMat cm = ScanSegments(partitionedImage, entry, true);
         if (debugFlag) {
             cout << "Finished ScanSegments" << endl;
         }
