@@ -278,16 +278,11 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         cout << "Package input image w/ processed pixels removed" << endl;
     }
     JandTemp.push_back(I.clone()); // input image with processed pixels removed    
-    
-    // free(): invalid pointer occuring from here back to caller
-    // attempt 1 to correct
-    J.release();
-    I.release();
-   
-    // attempt 2 to correct, enable all, get "double free or corruption (!prev)""
-    neighbor_list.clear();
-    delete[] neighbor_list.data();
 
+cout << JandTemp.capacity() << " and " << JandTemp.size() <<  endl;
+cout << JandTemp.data() << endl;
+    
+    
     return JandTemp;
 }
 
