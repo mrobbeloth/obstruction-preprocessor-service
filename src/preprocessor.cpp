@@ -22,7 +22,7 @@ using namespace chrono;
 using namespace cuda;
 
 //!
- /*! Region bsead image segmentatino method. Performs region growining in an
+ /*! Region bsead image segmentation method. Performs region growining in an
      image from a specified seedpoint (x,y). 
 
      The region is iteratively grown by comparing all unallocated neighboring
@@ -103,6 +103,14 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
     if (&I == nullptr) {
         cerr << "regionGrowing(): inupt matrix is null, bad things will "
              << "happen now" << endl;
+        return JandTemp;
+    }
+
+    //Sanity check 3
+    /* if input matrix is empty, nothing to work on*/
+    if (I.size().area() == 0) {
+        cerr << "regionGrowing(): input matrix is empty, nothing to work on" << endl;
+        return JandTemp;        
     }
 
     // Create output image and get dimensions
@@ -273,15 +281,15 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         cout << "regiongrowing(): package data structures for return, "
              << "start w/ output image" << endl;
     }
+
+// I'm stuck here I don't know why cloning the matrix array and pushing it 
+// onto the vector is not working.
+// preprocessor: malloc.c:4302: _int_malloc: Assertion `(unsigned long) (size) >= (unsigned long) (nb)' failed
     JandTemp.push_back(J.clone()); //output image
     if (debug) {
         cout << "Package input image w/ processed pixels removed" << endl;
     }
     JandTemp.push_back(I.clone()); // input image with processed pixels removed    
-
-cout << JandTemp.capacity() << " and " << JandTemp.size() <<  endl;
-cout << JandTemp.data() << endl;
-    
     
     return JandTemp;
 }
