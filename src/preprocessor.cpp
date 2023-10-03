@@ -491,23 +491,21 @@ Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
     // reshaping of data if needed, not sure it was ever used
     // originally thought I might use color RBG images probably 
 
-    /* Cluster centers identify in image data are in signed 32-bit floating
-       point mode and need to be converted to 8-bit unsigned mode */
-    centers.convertTo(centers, CV_8U); 
-    Mat res(labels.rows, labels.cols, CV_8U);
+    Mat clustered_data(data.rows, data.cols, data.type(), Scalar(0));
 
     /* Map each label to a cluster center */
-    for(int i = 0; i < res.rows;  i++) {
-            int label = labels.at<int>(i,0);
-            res.at<uint8_t>(i,0) = centers.at<uint8_t>(label,0);
+    int data_height = data.rows;
+    int data_width = data.cols;
+    for(int y = 0; y < data_height;  y++) {
+        for( int x = 0; x < data_width; x++) {
+            //int label = labels.at<int>(y,x);
+            clustered_data.at<double>(y, x) = data.at<double>(y,x);
+           // cout << "x=" << x << " y=" << y << " data=" << data.at<double>(y,x) << endl;
+        }
     }
-    
-    /* Turn partitioned data back into a format suitable as an 
-       image*/
-    Mat res2 = res.clone().reshape(1,data.rows);
 
     /* return partitioned image */
-    return res2;
+    return clustered_data.clone();
 } 
 
 int main(int argc, char* argv[]) {
