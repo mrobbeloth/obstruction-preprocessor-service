@@ -21,6 +21,15 @@ using namespace filesystem;
 using namespace chrono;
 using namespace cuda;
 
+vector<Mat> regionGrowingEmpty(Mat I, int x, int y, double reg_maxdist, 
+                          bool debug = false) {
+
+    vector<Mat> JandTemp; 
+    JandTemp.push_back(I.clone());
+    JandTemp.push_back(I.clone());
+    return JandTemp;
+}
+
 //!
  /*! Region based image segmentation method. Performs region growining in an
      image from a specified seedpoint (x,y). 
@@ -56,7 +65,7 @@ using namespace cuda;
  * */
 vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist, 
                           bool debug = false) {
-    vector<Mat> JandTemp;
+    vector<Mat> JandTemp = {};
     class Neighbor {
         Point pt;
         double px;
@@ -269,8 +278,8 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
     if (debug) {
         cout << "regiongrowing(): Remove pixels from region processed" << endl;
     }
-    // Remove pixels from region image that have been processed
     
+    // Remove pixels from region image that have been processed    
     for(int i  = 0; i < rows; i++) {
         for(int j = 0; j < cols; j++) {
             if (J.at<double>(i,j) == 1) {
@@ -293,6 +302,7 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         cout << "Package input image w/ processed pixels removed" << endl;
     }
     JandTemp.push_back(I.clone()); // input image with processed pixels removed    
+    
     
     return JandTemp;
 }
@@ -335,7 +345,7 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
     I.convertTo(Temp, I.type());
 
     // find the first non-zero location
-    vector<Point> points = findInMat(I, 1, "first");
+    vector<Point> points = findInMat(I.clone(), 1, "first");
 
     int n = 1;
     int indx = -1;
@@ -351,7 +361,7 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
         cout << "ScanSegments(): starting to process regions" << endl;
     }
 
-    while ((points.size() > 0) || (&points != nullptr)) {
+    while (points.size() > 0) {
         // get the next set of nonzero indices that is pixel of region
         int i = indx;
         int j = indy;
@@ -370,7 +380,7 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
             cout << "ScanSegments(): calling region growing code" << endl;
         }
 
-        vector<Mat> JAndTemp = regionGrowing(I, i, j, 1e-5, true);
+        vector<Mat> JAndTemp = regionGrowing(I.clone(), i, j, 1e-5, true);
         if (debug) {
             cout << "ScanSegments(): done calling region growing code" << endl;
         }
@@ -385,7 +395,7 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
            If I do not do so, I get a malloc allocation error 
            "(unsigned long) (size) >= (unsigned long) (nb)" 
            I tried using pointer assignment, clone, and copyTo without
-           success */
+           success 
         int nSizesJ[] = {JAndTemp.at(0).rows, JAndTemp.at(0).cols};
         Mat output_region_image(1, nSizesJ, JAndTemp.at(0).type());
         int nSizesTemp[] = {JAndTemp.at(1).rows, JAndTemp.at(1).cols};
@@ -408,6 +418,11 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
             cerr << "ScanSegments(): JAndTemp was null, skipping" << endl;
             continue;
         }
+        */
+        Mat output_region_image(JAndTemp.at(0).rows, JAndTemp.at(0).cols, 
+                                JAndTemp.at(0).type());
+        JAndTemp.at(0).copyTo(output_region_image);
+        JAndTemp.at(1).copyTo(Temp);
 
         /* Pad the array and copy the extracted image segment with its 
            grown region into it */
@@ -431,7 +446,7 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
 
             /* Assign padded array to Segment structure that gets
                returned to caller */
-            segments.push_back(padded);
+            segments.push_back(padded.clone());
 
             if (debug) {
                 cout << "ScanSegments(): finished padding process and "
@@ -453,6 +468,12 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
         auto toc = Clock::now();
         auto segTime = toc - tic; // substraction overload makes it nanoseconds
         scanTimes.push_back(segTime);
+
+        points = findInMat(Temp, 1, "first");
+        if (points.size() > 0) {
+            indx = points[0].x;
+            indy = points[0].y;
+        }
 
     }
 

@@ -192,7 +192,7 @@ bool imageSave(string path, string fn, Mat imageData) {
  * \param input data to find non-zero values in
  * \param k nnumber of entries to find
  * \param direction start at beginning ("first") or end ("last")
- * \return the list of non-zero indeices from input data x=row, y=col
+ * \return the list of non-zero indices from input data x=row, y=col
 */
 vector<Point> findInMat(Mat input, int k, string direction) {
     vector<Point> locNonZeroElements;
