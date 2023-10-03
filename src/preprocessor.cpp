@@ -22,7 +22,7 @@ using namespace chrono;
 using namespace cuda;
 
 //!
- /*! Region bsead image segmentation method. Performs region growining in an
+ /*! Region based image segmentation method. Performs region growining in an
      image from a specified seedpoint (x,y). 
 
      The region is iteratively grown by comparing all unallocated neighboring
@@ -238,7 +238,9 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
             y = pForUpdate.y;
 
             // Remove the pixel from the neighbor (check) list
-            neighbor_list.erase(std::find(neighbor_list.begin(), neighbor_list.end(), minNeighbor));
+            vector<Neighbor>::iterator pixToRmfromList = std::find(neighbor_list.begin(), neighbor_list.end(), minNeighbor);
+            neighbor_list.erase(pixToRmfromList);
+            delete minNeighbor;    
             neighbor_pos--;
         }
     }
@@ -265,9 +267,10 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
     }
 
     if (debug) {
-        cout << "Remove pixels from region processed" << endl;
+        cout << "regiongrowing(): Remove pixels from region processed" << endl;
     }
     // Remove pixels from region image that have been processed
+    
     for(int i  = 0; i < rows; i++) {
         for(int j = 0; j < cols; j++) {
             if (J.at<double>(i,j) == 1) {
