@@ -500,6 +500,7 @@ Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
         for( int x = 0; x < data_width; x++) {
             //int label = labels.at<int>(y,x);
             clustered_data.at<double>(y, x) = data.at<double>(y,x);
+            // some random change
            // cout << "x=" << x << " y=" << y << " data=" << data.at<double>(y,x) << endl;
         }
     }
