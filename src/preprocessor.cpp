@@ -3,6 +3,7 @@
 #include <iostream>
 #include <bits/stdc++.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudafilters.hpp>
@@ -486,7 +487,7 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
     return compositeSetMats;
 }
 
-Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
+Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers, bool debug = false) {
     // original java code includes check for three channels and
     // reshaping of data if needed, not sure it was ever used
     // originally thought I might use color RBG images probably 
@@ -496,16 +497,22 @@ Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers) {
     /* Map each label to a cluster center */
     int data_height = data.rows;
     int data_width = data.cols;
+    double *minVal;
+    double *maxVal;
+    cv::minMaxLoc(labels, minVal, maxVal, NULL, NULL);
+
     for(int y = 0; y < data_height;  y++) {
         for( int x = 0; x < data_width; x++) {
             //int label = labels.at<int>(y,x);
-            clustered_data.at<double>(y, x) = data.at<double>(y,x);
+            clustered_data.at<double>(y, x) = ((labels.at<double>(y*data_height+x,0) + *minVal)/(*maxVal))*255;
             // some random change
-           // cout << "x=" << x << " y=" << y << " data=" << data.at<double>(y,x) << endl;
+            if (debug)
+                cout << "x=" << x << " y=" << y << " data=" << data.at<double>(y,x) << endl; 
         }
     }
 
     /* return partitioned image */
+    cout << "Returning clustered data" << endl;
     return clustered_data.clone();
 } 
 
@@ -756,7 +763,7 @@ int main(int argc, char* argv[]) {
             kmeans(colVecFloat,k,labels, criteria, criteria.maxCount, flags, centers);
         cout << "Compactness=" << compactness << endl;
     
-        Mat partitionedImage = opencv_kmeans_postProcess(mergedMat, labels, centers);
+        Mat partitionedImage = opencv_kmeans_postProcess(mergedMat, labels, centers, true);
         if (debugFlag) {
             string fn = "Partitioned_"+entry;
             result = imageSave("../output/", "Partitioned_"+entry, partitionedImage);
