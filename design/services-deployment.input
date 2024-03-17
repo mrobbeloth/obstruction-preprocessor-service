@@ -1,16 +1,23 @@
 /' To build: java -jar plantuml-1.2023.8.jar services-deployment.input '/
 @startuml
 node preprocessor
+database datastore
+node exemplar_processing
 node matching
-node exemplar
-node datastore
 node client
 cloud network
-client--network
-network--matching
-network--exemplar
-matching--preprocessor
-matching--datastore
-exemplar--preprocessor
-exemplar--datastore
+actor researcher
+usecase process_exemplar_set
+usecase find_a_match
+client -- network
+network -- exemplar_processing
+network -- matching
+exemplar_processing -- preprocessor
+matching -- preprocessor
+exemplar_processing -- datastore
+matching -- datastore
+researcher -- process_exemplar_set
+researcher -- find_a_match
+process_exemplar_set -- client
+find_a_match -- client
 @enduml
