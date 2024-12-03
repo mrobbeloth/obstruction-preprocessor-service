@@ -497,13 +497,21 @@ Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers, bool debug = fa
     /* Map each label to a cluster center */
     int data_height = data.rows;
     int data_width = data.cols;
-    double *minVal;
-    double *maxVal;
+    double *minVal = new double();
+    double *maxVal = new double();
+    if (labels.empty()) {
+        cerr << "opencv_kmeans_postProcess(): labels is empty" << endl;
+        return clustered_data.clone();
+    }
     cv::minMaxLoc(labels, minVal, maxVal, NULL, NULL);
 
     for(int y = 0; y < data_height;  y++) {
         for( int x = 0; x < data_width; x++) {
             //int label = labels.at<int>(y,x);
+            if (y * data_width + x >= labels.rows) {
+                cerr << "opencv_kmeans_postProcess(): index out of bounds" << endl;
+                continue;
+            }
             clustered_data.at<double>(y, x) = ((labels.at<double>(y*data_height+x,0) + *minVal)/(*maxVal))*255;
             // some random change
             if (debug)
@@ -512,8 +520,16 @@ Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers, bool debug = fa
     }
 
     /* return partitioned image */
-    cout << "Returning clustered data" << endl;
-    return clustered_data.clone();
+    Mat aCopy;
+    try {
+        cout << "Returning clustered data" << endl;
+        aCopy = clustered_data.clone();
+    }
+    catch (cv::Exception& e) {
+        cerr << "opencv_kmeans_postProcess(): exception caught: " << e.what() << endl;
+        aCopy = Mat::zeros(data.rows, data.cols, data.type());
+    }
+    return aCopy;
 } 
 
 int main(int argc, char* argv[]) {
@@ -762,7 +778,7 @@ int main(int argc, char* argv[]) {
         double compactness =
             kmeans(colVecFloat,k,labels, criteria, criteria.maxCount, flags, centers);
         cout << "Compactness=" << compactness << endl;
-    
+
         Mat partitionedImage = opencv_kmeans_postProcess(mergedMat, labels, centers, true);
         if (debugFlag) {
             string fn = "Partitioned_"+entry;
