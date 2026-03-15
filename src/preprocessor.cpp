@@ -1,14 +1,19 @@
 #include <iostream>
 #include <stdio.h>
 #include <iostream>
-#include <bits/stdc++.h>
+#include <vector>
+#include <algorithm>
+#include <climits>
+#include <cmath>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/mat.hpp>
+#ifdef HAVE_CUDA
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudafilters.hpp>
-#include <opencv2/core/cvstd.hpp>
 #include <opencv2/cudaarithm.hpp>
+#endif
+#include <opencv2/core/cvstd.hpp>
 #include <filesystem>
 #include <string>
 #include <chrono>
@@ -18,9 +23,11 @@
 
 using namespace std;
 using namespace cv;
-using namespace filesystem;
+namespace fs = std::filesystem;
 using namespace chrono;
+#ifdef HAVE_CUDA
 using namespace cuda;
+#endif
 
 vector<Mat> regionGrowingEmpty(Mat I, int x, int y, double reg_maxdist, 
                           bool debug = false) {
@@ -452,7 +459,7 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
             if (debug) {
                 cout << "ScanSegments(): finished padding process and "
                      << "pushed segment back into vector" << endl;
-                bool saveResult = imageSave("../output/", "padded_"+filename, padded);
+                bool saveResult = imageSave((fs::path("..") / "output" / "").string(), "padded_"+filename, padded);
                 if(saveResult == false) {
                     cerr << "ScanSegments(): failed to save padded image" << endl;
                 }
@@ -538,7 +545,11 @@ int main(int argc, char* argv[]) {
     int kMeansIterations = 16;
     int flags = KMEANS_PP_CENTERS; // 0x2
 
+#ifdef HAVE_CUDA
     int GPUCnt = getCudaEnabledDeviceCount();
+#else
+    int GPUCnt = 0;
+#endif
     cout << "Number of CUDA enabled devices: " << GPUCnt << endl;
 
     // start code timing 
@@ -565,35 +576,43 @@ int main(int argc, char* argv[]) {
             debugFlag = true;
         }
     }
-    int fileRemoved = remove_all("../output");
-    string path = "../data/coil-100/";
-    bool result = create_directory("../output");
-    vector<string> files =findFiles(path, ".png");    
+    int fileRemoved = fs::remove_all(fs::path("..") / "output");
+    fs::path dataPath = fs::path("..") / "data" / "coil-100";
+    fs::path outputPath = fs::path("..") / "output";
+    bool result = fs::create_directory(outputPath);
+    vector<string> files = findFiles(dataPath.string(), ".png");    
     for (const string& entry : files) {     
         // convert to grayscale
         cout << "working with file:" << entry << endl;
-        Mat img_grayscale = imread(path+entry, IMREAD_GRAYSCALE);
+        Mat img_grayscale = imread((dataPath / entry).string(), IMREAD_GRAYSCALE);
 
+#ifdef HAVE_CUDA
         GpuMat gpu_img_grayscale;
+#endif
         if (GPUCnt > 0) {
+#ifdef HAVE_CUDA
             gpu_img_grayscale.upload(img_grayscale);
             cout << "Image Size:" << gpu_img_grayscale.size() << endl;
+#endif
         }
         else {
             cout << "Image Size:" << img_grayscale.size() << endl;
         }
         
         if (debugFlag) {
+#ifdef HAVE_CUDA
             if (GPUCnt > 0) {
                 gpu_img_grayscale.download(img_grayscale);
             }
-            result = imageSave("../output/", entry, img_grayscale);
+#endif
+            result = imageSave((outputPath / "").string(), entry, img_grayscale);
             if (!result) {
                 cerr << "Failed to write " << img_grayscale << endl;
             }
         }            
 
         // Test for GPU
+#ifdef HAVE_CUDA
         if (GPUCnt > 0) {
             int type = gpu_img_grayscale.type();
             // Test if 8-bit unsigned grayscale
@@ -602,7 +621,7 @@ int main(int argc, char* argv[]) {
                 gpu_img_grayscale.convertTo(gpu_img_grayscale, CV_8U);
                 gpu_img_grayscale.download(img_grayscale);
                 if (debugFlag) {
-                    result = imageSave("../output/", "8U_"+entry, img_grayscale);
+                    result = imageSave((outputPath / "").string(), "8U_"+entry, img_grayscale);
                     if (!result) {
                         cerr << "Failed to write " << img_grayscale << endl;
                     }
@@ -612,7 +631,9 @@ int main(int argc, char* argv[]) {
                 cout << "Image is already 8-bit unsigned grayscale" << endl;
             }
         }
-        else {
+        else
+#endif
+        {
             // CPU only
             int type = img_grayscale.type();
             // Test if 8-bit unsigned grayscale
@@ -620,7 +641,7 @@ int main(int argc, char* argv[]) {
                 cout << "Converting " << entry << " to 8-bit unsigned grayscale" << endl;
                 img_grayscale.convertTo(img_grayscale, CV_8U);
                 if (debugFlag) {
-                    result = imageSave("../output/", "8U_"+entry, img_grayscale);
+                    result = imageSave((outputPath / "").string(), "8U_"+entry, img_grayscale);
                     if (!result) {
                         cerr << "Failed to write " << img_grayscale << endl;
                     }
@@ -634,6 +655,7 @@ int main(int argc, char* argv[]) {
         /* create a state of the image before preprocessing is done to use later in 
            following sharpen operation */
         Mat img_duplicate = img_grayscale.clone();
+#ifdef HAVE_CUDA
         GpuMat gpu_img_duplicate; 
         GpuMat gpu_img_src, gpu_img_dst; 
         
@@ -641,6 +663,7 @@ int main(int argc, char* argv[]) {
           gpu_img_src = gpu_img_grayscale.clone();
           gpu_img_duplicate = gpu_img_grayscale.clone();
         }
+#endif
 
         /* Gaussian Blur image to reduce noise from original image. Will need
            to follow-up with edge detection 
@@ -656,25 +679,28 @@ int main(int argc, char* argv[]) {
         Mat gaussianApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
 
+#ifdef HAVE_CUDA
         if (GPUCnt > 0) {
-            Ptr<Filter> gaussianFilter = createGaussianFilter(
+            Ptr<cuda::Filter> gaussianFilter = cuda::createGaussianFilter(
                 gpu_img_src.type(), gpu_img_src.type(), Size(5,5), 0.0, 0.0, BORDER_DEFAULT, -1);
             gaussianFilter->apply(gpu_img_src, gpu_img_dst);
             gpu_img_dst.download(gaussianApplied);  
             if (debugFlag) {
                 string fn = "Gaussian_"+entry;              
-                result = imageSave("../output/", fn, gaussianApplied);
+                result = imageSave((outputPath / "").string(), fn, gaussianApplied);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
                 }
             }
         }
-        else {
+        else
+#endif
+        {
             GaussianBlur(img_grayscale, gaussianApplied, Size(5,5),0, 0, BORDER_DEFAULT);
 
             if (debugFlag) {
                 string fn = "Gaussian_"+entry;   
-                result = imageSave("../output/", fn, gaussianApplied);
+                result = imageSave((outputPath / "").string(), fn, gaussianApplied);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
                 }
@@ -687,6 +713,7 @@ int main(int argc, char* argv[]) {
         /* follow up with sharpening */
         Mat sharpenApplied(img_grayscale.rows, img_grayscale.cols, 
                             img_grayscale.type());
+#ifdef HAVE_CUDA
         GpuMat gpu_img_sharpened;
         if (GPUCnt > 0) {
             gpu_img_sharpened = sharpenGPU(gpu_img_dst);
@@ -694,18 +721,20 @@ int main(int argc, char* argv[]) {
             if (debugFlag) {
                 cout << "Applied GPU Sharpen Bilateral filter" << endl;
                 string fn = "Sharpen_"+entry;
-                result = imageSave("../output/", fn, sharpenApplied);
+                result = imageSave((outputPath / "").string(), fn, sharpenApplied);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
                 }
             }
         }
-        else {
+        else
+#endif
+        {
             sharpenApplied = sharpen(gaussianApplied);
             if (debugFlag) {
                 cout << "Applied CPU Sharpen Bilateral filter" << endl;
                 string fn = "Sharpen_"+entry;
-                result = imageSave("../output/", fn, sharpenApplied);
+                result = imageSave((outputPath / "").string(), fn, sharpenApplied);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
                 }
@@ -715,6 +744,7 @@ int main(int argc, char* argv[]) {
         // Merge original image with preprocessed image for clearest shape
         Mat mergedMat(img_grayscale.rows, img_grayscale.cols, 
                     img_grayscale.type());
+#ifdef HAVE_CUDA
         GpuMat gpuMergedMat;
         if (GPUCnt > 0) {  
             cv::cuda::addWeighted(gpu_img_duplicate, 1.5, gpu_img_sharpened,-0.5, 0, gpuMergedMat);
@@ -722,13 +752,15 @@ int main(int argc, char* argv[]) {
             if (debugFlag) {
                 cout << "Used GPU to merge original image with preprocessed image" << endl;
                 string fn = "Merged_"+entry;
-                result = imageSave("../output/", fn, mergedMat);
+                result = imageSave((outputPath / "").string(), fn, mergedMat);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
                 }
             }
         }
-        else {
+        else
+#endif
+        {
             Mat mergedMat(img_grayscale.rows, img_grayscale.cols, 
                                 img_grayscale.type());
             cv::addWeighted(img_duplicate, 1.5, sharpenApplied,-0.5, 0, mergedMat);
@@ -736,7 +768,7 @@ int main(int argc, char* argv[]) {
             if (debugFlag) {
                 cout << "Used CPU to merge original image with preprocessed image" << endl;
                 string fn = "Merged_"+entry;
-                result = imageSave("../output/", fn, mergedMat);
+                result = imageSave((outputPath / "").string(), fn, mergedMat);
                 if (!result) {
                     cerr << "Failed to write " << fn << endl;
                 }
@@ -782,7 +814,7 @@ int main(int argc, char* argv[]) {
         Mat partitionedImage = opencv_kmeans_postProcess(mergedMat, labels, centers, true);
         if (debugFlag) {
             string fn = "Partitioned_"+entry;
-            result = imageSave("../output/", "Partitioned_"+entry, partitionedImage);
+            result = imageSave((outputPath / "").string(), "Partitioned_"+entry, partitionedImage);
             if (!result) {
                 cerr << "Failed to write " << fn << endl;
             }

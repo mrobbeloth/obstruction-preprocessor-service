@@ -50,6 +50,7 @@ Mat sharpen(Mat input) {
     return output;
 }
 
+#ifdef HAVE_CUDA
 //!
 /*!
  * Sharpen the image
@@ -64,6 +65,7 @@ GpuMat sharpenGPU(GpuMat input) {
     cv::cuda::bilateralFilter(input, output, 9, 50, 50);
     return output;
 }
+#endif
 
 //!
  /*! Unsharp masking
