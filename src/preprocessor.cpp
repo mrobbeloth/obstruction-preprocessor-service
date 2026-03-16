@@ -176,7 +176,8 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
             int yn = y + neigb[j][1];
 
             // Check if neighbour is inside or outside the image
-            bool ins = (xn > 0) && (yn > 0) && (xn < rows) && (yn < cols);
+            // Use >= 0, not > 0 (C++ is 0-indexed; MATLAB used >=1 for 1-indexed)
+            bool ins = (xn >= 0) && (yn >= 0) && (xn < rows) && (yn < cols);
 
             // Add neighbor if inside and not already part of the segmented area
             /* In Java version, there is a check for get/at returning null and
@@ -241,30 +242,28 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
             }
         }
 
-        if (debug) {
-            cout << "regiongrowing(): done adding pixel with intensity nearest mean of region" << endl;
-        }
         J.at<double>(x,y) = 2.0;
         reg_size++;
 
+        // MATLAB: min() on empty array returns Inf → loop exits.
+        // C++: if no neighbors remain, pixdist never updates → infinite loop.
+        // Fix: explicitly break when neighbor list is exhausted.
+        if (minNeighbor == nullptr) break;
+
         // Calculate the new mean of the region
-        if(minNeighbor != nullptr){
-            // update best min pixel distance
-            pixdist = min_dist;
+        pixdist = min_dist;
+        reg_mean = ((reg_mean*reg_size) + minNeighbor->getValue()) / (reg_size + 1);
 
-            reg_mean = ((reg_mean*reg_size) + minNeighbor->getValue()) / (reg_size + 1);
+        // Save the x and y coordinates of the pixel (for the neighbour add proccess)
+        Point pForUpdate = minNeighbor->getPoint();
+        x = pForUpdate.x;
+        y = pForUpdate.y;
 
-            // Save the x and y coordinates of the pixel (for the neighbour add proccess)
-            Point pForUpdate = minNeighbor->getPoint();
-            x = pForUpdate.x;
-            y = pForUpdate.y;
-
-            // Remove the pixel from the neighbor (check) list
-            vector<Neighbor>::iterator pixToRmfromList = std::find(neighbor_list.begin(), neighbor_list.end(), minNeighbor);
-            neighbor_list.erase(pixToRmfromList);
-            // minNeighbor pointed into the vector — do NOT delete it
-            neighbor_pos--;
-        }
+        // O(1) swap-remove: copy last active entry into this slot, decrement count.
+        // Mirrors MATLAB: neg_list(index,:)=neg_list(neg_pos,:); neg_pos=neg_pos-1
+        int minIdx = static_cast<int>(minNeighbor - neighbor_list.data());
+        neighbor_list[minIdx] = neighbor_list[neighbor_pos - 1];
+        neighbor_pos--;
     }
     if (debug) {
         cout << "regiongrowing(): done with neighbor pixel processing" << endl;
