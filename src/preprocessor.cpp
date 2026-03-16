@@ -519,10 +519,11 @@ Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers, bool debug = fa
                 cerr << "opencv_kmeans_postProcess(): index out of bounds" << endl;
                 continue;
             }
-            clustered_data.at<double>(y, x) = ((labels.at<double>(y*data_height+x,0) + *minVal)/(*maxVal))*255;
+            clustered_data.at<uint8_t>(y, x) = static_cast<uint8_t>(
+                ((labels.at<int>(y * data_width + x, 0) - *minVal) / (*maxVal - *minVal)) * 255);
             // some random change
             if (debug)
-                cout << "x=" << x << " y=" << y << " data=" << data.at<double>(y,x) << endl; 
+                cout << "x=" << x << " y=" << y << " data=" << (int)data.at<uint8_t>(y, x) << endl; 
         }
     }
 
