@@ -130,6 +130,9 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         return JandTemp;        
     }
 
+    // Convert to CV_64F so all at<double>() accesses are valid
+    I.convertTo(I, CV_64F);
+
     // Create output image and get dimensions
     if (debug == true) {
         cout << "regiongrowing(): I is:" << I << endl;
@@ -305,13 +308,17 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
 // I'm stuck here I don't know why cloning the matrix array and pushing it 
 // onto the vector is not working.
 // preprocessor: malloc.c:4302: _int_malloc: Assertion `(unsigned long) (size) >= (unsigned long) (nb)' failed
-    JandTemp.push_back(J.clone()); //output image
+    // Convert back to CV_8U: caller (findInMat, ScanSegments) expects uint8_t matrices
+    Mat J_u8, I_u8;
+    J.convertTo(J_u8, CV_8U);
+    I.convertTo(I_u8, CV_8U);
+    JandTemp.push_back(J_u8.clone()); //output image
     if (debug) {
         cout << "Package input image w/ processed pixels removed" << endl;
     }
-    JandTemp.push_back(I.clone()); // input image with processed pixels removed    
-    
-    
+    JandTemp.push_back(I_u8.clone()); // input image with processed pixels removed
+
+
     return JandTemp;
 }
 
