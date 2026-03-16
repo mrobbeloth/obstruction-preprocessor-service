@@ -155,7 +155,9 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
     int neighbor_pos = 0;    
 
     // Keep track of the neighbors that still have to be processed
-    vector<Neighbor> neighbor_list(neighbors_free);
+    // Use reserve (not resize) so push_back adds real neighbors at index 0, 1, 2...
+    vector<Neighbor> neighbor_list;
+    neighbor_list.reserve(neighbors_free);
 
     // Distance of the region newest pixel to the region mean
     double pixdist = 0;
@@ -200,7 +202,7 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
         }
         if (neighbor_pos + 10 > neighbors_free) {
             neighbors_free = neighbors_free + 10000;
-            neighbor_list.resize(neighbors_free);
+            neighbor_list.reserve(neighbors_free);
         }
 
         // Add pixel with intensity nearest to the mean of the region
@@ -214,7 +216,7 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
 
         for(int neg_pos_cnt = 0; neg_pos_cnt < neighbor_pos; neg_pos_cnt++) {
             if (&neighbor_list.at(neg_pos_cnt) != nullptr) {
-                *curNeighbor = neighbor_list.at(neg_pos_cnt);
+                curNeighbor = &neighbor_list.at(neg_pos_cnt);
             }
             else {
                 cerr << "regiongrowing(): neighbor list was null, skipping" << endl;
@@ -260,7 +262,7 @@ vector<Mat> regionGrowing(Mat I, int x, int y, double reg_maxdist,
             // Remove the pixel from the neighbor (check) list
             vector<Neighbor>::iterator pixToRmfromList = std::find(neighbor_list.begin(), neighbor_list.end(), minNeighbor);
             neighbor_list.erase(pixToRmfromList);
-            delete minNeighbor;    
+            // minNeighbor pointed into the vector — do NOT delete it
             neighbor_pos--;
         }
     }
