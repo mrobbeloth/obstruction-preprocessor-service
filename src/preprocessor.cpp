@@ -20,6 +20,7 @@
 #include <limits>
 #include "utility.h"
 #include "CompositeMat.h"
+#include "kMeansNGBContainer.h"
 
 using namespace std;
 using namespace cv;
@@ -490,51 +491,59 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
     return compositeSetMats;
 }
 
-Mat opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers, bool debug = false) {
-    // original java code includes check for three channels and
-    // reshaping of data if needed, not sure it was ever used
-    // originally thought I might use color RBG images probably 
-
+kMeansNGBContainer opencv_kmeans_postProcess(Mat data, Mat labels, Mat centers, bool debug = false) {
+    /* Setup data structure holding partitioned image data */
     Mat clustered_data(data.rows, data.cols, data.type(), Scalar(0));
+    map<string, Mat> stats;
 
-    /* Map each label to a cluster center */
+    /* Keep stats on partitioning process (one entry per cluster center) */
+    map<int, int> counts;
+    for (int i = 0; i < centers.rows; i++) counts[i] = 0;
+
+    /* Map each label to a normalized grayscale intensity */
     int data_height = data.rows;
-    int data_width = data.cols;
-    double *minVal = new double();
-    double *maxVal = new double();
+    int data_width  = data.cols;
+
     if (labels.empty()) {
         cerr << "opencv_kmeans_postProcess(): labels is empty" << endl;
-        return clustered_data.clone();
+        return kMeansNGBContainer(clustered_data, stats);
     }
-    cv::minMaxLoc(labels, minVal, maxVal, NULL, NULL);
 
-    for(int y = 0; y < data_height;  y++) {
-        for( int x = 0; x < data_width; x++) {
-            //int label = labels.at<int>(y,x);
-            if (y * data_width + x >= labels.rows) {
-                cerr << "opencv_kmeans_postProcess(): index out of bounds" << endl;
-                continue;
-            }
+    double minVal = 0.0, maxVal = 0.0;
+    cv::minMaxLoc(labels, &minVal, &maxVal, nullptr, nullptr);
+
+    /* labels has been reshaped to 2D (rows x cols) at the call site,
+     * so we can use direct (y, x) access — mirrors Java labelsFromImg.get(y, x) */
+    for (int y = 0; y < data_height; y++) {
+        for (int x = 0; x < data_width; x++) {
+            int label = labels.at<int>(y, x);
+
+            /* Update per-cluster pixel count */
+            counts[label]++;
+
+            /* Normalize label to 0-255 — matches Java: ((label + minVal) / maxVal) * 255 */
             clustered_data.at<uint8_t>(y, x) = static_cast<uint8_t>(
-                ((labels.at<int>(y * data_width + x, 0) - *minVal) / (*maxVal - *minVal)) * 255);
-            // some random change
-            if (debug)
-                cout << "x=" << x << " y=" << y << " data=" << (int)data.at<uint8_t>(y, x) << endl; 
+                ((label + minVal) / maxVal) * 255);
         }
     }
 
-    /* return partitioned image */
-    Mat aCopy;
-    try {
-        cout << "Returning clustered data" << endl;
-        aCopy = clustered_data.clone();
+    /* Build stats map: cluster label string -> 1x1 CV_32FC1 Mat containing pixel count */
+    for (const auto& kv : counts) {
+        Mat m(1, 1, CV_32FC1);
+        m.at<float>(0, 0) = static_cast<float>(kv.second);
+        stats[to_string(kv.first)] = m;
     }
-    catch (cv::Exception& e) {
-        cerr << "opencv_kmeans_postProcess(): exception caught: " << e.what() << endl;
-        aCopy = Mat::zeros(data.rows, data.cols, data.type());
+
+    if (debug) {
+        cout << "opencv_kmeans_postProcess() counts: {";
+        for (const auto& kv : counts)
+            cout << kv.first << "=" << kv.second << " ";
+        cout << "}" << endl;
     }
-    return aCopy;
-} 
+
+    cout << "Returning clustered data" << endl;
+    return kMeansNGBContainer(clustered_data, stats);
+}
 
 int main(int argc, char* argv[]) {
     bool debugFlag = true;
@@ -808,7 +817,10 @@ int main(int argc, char* argv[]) {
             kmeans(colVecFloat,k,labels, criteria, criteria.maxCount, flags, centers);
         cout << "Compactness=" << compactness << endl;
 
-        Mat partitionedImage = opencv_kmeans_postProcess(mergedMat, labels, centers, true);
+        /* Reshape flat N×1 labels to 2D (rows×cols) — mirrors Java labelsFromImg */
+        Mat labelsFromImg = labels.reshape(1, mergedMat.rows);
+        kMeansNGBContainer kmeansContainer = opencv_kmeans_postProcess(mergedMat, labelsFromImg, centers, debugFlag);
+        Mat partitionedImage = kmeansContainer.getClustered_data();
         if (debugFlag) {
             string fn = "Partitioned_"+entry;
             result = imageSave((outputPath / "").string(), "Partitioned_"+entry, partitionedImage);

@@ -25,7 +25,7 @@ else()
   message(STATUS "CUDA disabled by user — building CPU-only")
 endif()
 
-add_executable(preprocessor src/preprocessor.cpp src/utility.cpp src/CompositeMat.cpp)
+add_executable(preprocessor src/preprocessor.cpp src/utility.cpp src/CompositeMat.cpp src/kMeansNGBContainer.cpp)
 target_include_directories(preprocessor PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 if(CUDA_AVAILABLE)
