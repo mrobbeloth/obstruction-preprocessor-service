@@ -359,8 +359,8 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
     // Temp is the working copy; consumed pixels get set to 0 after each regionGrowing call
     Temp = I.clone();
 
-    // find the first non-zero location
-    vector<Point> points = findInMat(I.clone(), 1, "first");
+    // find the first non-zero location (use Temp, consistent with Java/MATLAB)
+    vector<Point> points = findInMat(Temp, 1, "first");
 
     int n = 1;
     int indx = -1;
@@ -395,10 +395,9 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
             cout << "ScanSegments(): calling region growing code" << endl;
         }
 
-        // Pass Temp (progressively consumed), not I (original).
-        // MATLAB/Java both pass Temp so that previously consumed pixels (set to 0)
-        // are not re-grown by subsequent calls — otherwise the outer loop never ends.
-        vector<Mat> JAndTemp = regionGrowing(Temp.clone(), i, j, 1e-5, true);
+        // Pass debug flag through — Java hardcodes false; hardcoding true floods
+        // stdout with per-pixel output and causes major slowdown.
+        vector<Mat> JAndTemp = regionGrowing(Temp.clone(), i, j, 1e-5, debug);
         if (debug) {
             cout << "ScanSegments(): done calling region growing code" << endl;
         }
@@ -407,6 +406,14 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
         // Put I into Temp for next bit of code 
         if (debug) {
             cout << "ScanSegments(): extracting Mat arrays from regionGrowing" << endl;
+        }
+
+        // Guard: regionGrowing returns empty vector on error (sanity check failures)
+        if (JAndTemp.size() < 2 || JAndTemp.at(0).empty() || JAndTemp.at(1).empty()) {
+            cerr << "ScanSegments(): regionGrowing returned invalid result, skipping" << endl;
+            points = findInMat(Temp, 1, "first");
+            if (points.size() > 0) { indx = points[0].x; indy = points[0].y; }
+            continue;
         }
 
         /* Pad the array and copy the extracted image segment with its 
@@ -426,7 +433,9 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
         }
         int padding = 3;
 
-        if (&output_region_image != nullptr) {
+        // Java checks: if (Temp != null) — mirrors that valid output was returned.
+        // &output_region_image != nullptr is always true (stack var); use .empty() instead.
+        if (!output_region_image.empty()) {
             padded.create(output_region_image.rows + 2*padding, 
                           output_region_image.cols + 2*padding, 
                           output_region_image.type());
