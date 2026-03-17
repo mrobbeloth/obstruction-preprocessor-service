@@ -356,9 +356,8 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
         }
     }
 
-    // convert the input image to double precision
+    // Temp is the working copy; consumed pixels get set to 0 after each regionGrowing call
     Temp = I.clone();
-    I.convertTo(Temp, I.type());
 
     // find the first non-zero location
     vector<Point> points = findInMat(I.clone(), 1, "first");
@@ -396,7 +395,10 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
             cout << "ScanSegments(): calling region growing code" << endl;
         }
 
-        vector<Mat> JAndTemp = regionGrowing(I.clone(), i, j, 1e-5, true);
+        // Pass Temp (progressively consumed), not I (original).
+        // MATLAB/Java both pass Temp so that previously consumed pixels (set to 0)
+        // are not re-grown by subsequent calls — otherwise the outer loop never ends.
+        vector<Mat> JAndTemp = regionGrowing(Temp.clone(), i, j, 1e-5, true);
         if (debug) {
             cout << "ScanSegments(): done calling region growing code" << endl;
         }
