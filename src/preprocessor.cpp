@@ -767,8 +767,6 @@ int main(int argc, char* argv[]) {
         else
 #endif
         {
-            Mat mergedMat(img_grayscale.rows, img_grayscale.cols, 
-                                img_grayscale.type());
             cv::addWeighted(img_duplicate, 1.5, sharpenApplied,-0.5, 0, mergedMat);
 
             if (debugFlag) {
