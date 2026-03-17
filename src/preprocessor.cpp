@@ -445,8 +445,9 @@ CompositeMat ScanSegments(Mat I, string filename, bool debug) {
                 cout << "ScanSegments(): finished padding process and "
                      << "pushed segment back into vector" << endl;
                 bool saveResult = imageSave((fs::path("..") / "output" / "").string(), "padded_"+filename, padded);
-                if(saveResult == false) {
-                    cerr << "ScanSegments(): failed to save padded image" << endl;
+                bool saveResult2 = imageSave((fs::path("..") / "output" / "").string(), "Temp_"+filename, Temp);
+                if((saveResult == false) || (saveResult2 == false)) {
+                    cerr << "ScanSegments(): failed to save padded image or temp image" << endl;
                 }
             }   
         }
