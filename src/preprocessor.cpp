@@ -839,17 +839,103 @@ int main(int argc, char* argv[]) {
         cm.setFileName(entry);
         vector<Mat> cm_al_ms = cm.getListofMats();
         int segCnt = 0;
-        for(Mat m : cm_al_ms) {
+
+        /* Apply Canny edge detection and dilation to each segment.
+           Mirrors Java LGAlgorithm.java lines 336-358:
+           - Canny with thresholds (0,0) for maximum edge sensitivity
+             (noise already removed by kmeans preprocessing)
+           - 2x2 rectangular structuring element for dilation
+           - Dilate to thicken edges so they stand out better */
+        for (size_t si = 0; si < cm_al_ms.size(); si++) {
+            Mat& m = cm_al_ms[si];
             Mat n(m.rows, m.cols, m.type());
-            if(m.type() != CV_8U) {
+            if (m.type() != CV_8U) {
                 m.convertTo(n, CV_8U);
             }
             else {
                 n = m;
             }
+
+#ifdef HAVE_CUDA
+            if (GPUCnt > 0) {
+                GpuMat gpu_n;
+                gpu_n.upload(n);
+
+                auto cannyDetector = cuda::createCannyEdgeDetector(0, 0, 3, false);
+                GpuMat gpu_edges;
+                cannyDetector->detect(gpu_n, gpu_edges);
+
+                Mat element = getStructuringElement(MORPH_RECT,
+                                                    Size(2, 2),
+                                                    Point(1, 1));
+                auto dilateFilter = cuda::createMorphologyFilter(
+                    MORPH_DILATE, CV_8U, element, Point(1, 1), 1);
+                GpuMat gpu_dilated;
+                dilateFilter->apply(gpu_edges, gpu_dilated);
+
+                gpu_dilated.download(n);
+
+                if (debugFlag) {
+                    cout << "Applied GPU Canny + Dilate to segment " << (segCnt + 1) << endl;
+                }
+            }
+            else
+#endif
+            {
+                Canny(n, n, 0, 0);
+
+                Mat element = getStructuringElement(MORPH_RECT,
+                                                    Size(2, 2),
+                                                    Point(1, 1));
+                dilate(n, n, element);
+
+                if (debugFlag) {
+                    cout << "Applied CPU Canny + Dilate to segment " << (segCnt + 1) << endl;
+                }
+            }
+
+            // Write processed result back into segment list
+            cm_al_ms[si] = n;
+
+            if (debugFlag) {
+                // Extract basename without extension for filename
+                string basename = entry.substr(0, entry.find_last_of('.'));
+                string fn = basename + "_segments_after_threshold"
+                            + to_string(++segCnt) + ".jpg";
+                result = imageSave((outputPath / "").string(), fn, n);
+                if (!result) {
+                    cerr << "Failed to write " << fn << endl;
+                }
+            }
+            else {
+                segCnt++;
+            }
         }
 
-        // TODO Start canny, dilate, and other ops here
+        /* Print per-segment scan times summary (mirrors Java lines 360-388) */
+        if (debugFlag) {
+            Mat scanTimesPerSegment = cm.getMat();
+            int colsSTPS = scanTimesPerSegment.cols;
+            if (scanTimesPerSegment.rows == 1 && colsSTPS > 0) {
+                cout << "Scan Times/Segment:[";
+                double totalTime = 0.0;
+                for (int i = 0; i < colsSTPS; i++) {
+                    double segScanTime = scanTimesPerSegment.at<double>(0, i);
+                    long timeMs = static_cast<long>(segScanTime / 1e6);
+                    cout << timeMs << " ms";
+                    if (i < colsSTPS - 1) cout << ", ";
+                    totalTime += segScanTime;
+                }
+                cout << "]" << endl;
+                long avgMs = static_cast<long>((totalTime / colsSTPS) / 1e6);
+                long totalMs = static_cast<long>(totalTime / 1e6);
+                cout << "Average Scan Time/Segment: " << avgMs << "ms" << endl;
+                cout << "Total scan time: " << totalMs << " ms" << endl;
+            }
+        }
+
+        /* WARNING: Do not autocrop segments otherwise L-G Graph Algorithm
+         * calculations will be utterly wrong */
     }
 
 
